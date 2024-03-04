@@ -1,6 +1,6 @@
 # Ignore build artifacts
 bin/
 obj/
-.vscode/
+.vs/
 .idea/
 
