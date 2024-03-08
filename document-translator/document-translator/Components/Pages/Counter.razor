@@ -1,19 +1,42 @@
 ﻿@page "/counter"
 @rendermode InteractiveServer
+@inject IFileTypeDetection iFileTypeDetector
+@inject IUploader iUploader
+@inject ITranslator iTranslator
 
-<PageTitle>Counter</PageTitle>
+<PageTitle>Let's Translate'</PageTitle>
 
-<h1>Counter</h1>
+<InputFile OnChange="LoadFiles"></InputFile>
 
-<p role="status">Current count: @currentCount</p>
+<button class="btn btn-primary" @onclick="upload">Upload the files</button>
+<button class="btn btn-primary" @onclick="translate">Translate</button>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
-    private int currentCount = 0;
+    private string fileType = "AAA";
 
     private void IncrementCount()
     {
-        currentCount++;
+        fileType = iFileTypeDetector.getFileType(5);
+        if (fileType == "json")
+        {
+
+        }
+    }
+
+    private void LoadFiles(InputFileChangeEventArgs e)
+    {
+
+    }
+    private void upload( )
+    {
+        iUploader.Upload();
+    }
+
+    private void translate()
+    {
+        iTranslator.Translate("es");
     }
 }
+
+

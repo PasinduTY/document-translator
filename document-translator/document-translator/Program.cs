@@ -6,6 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddScoped<IFileTypeDetection, FileTypeDetection>();
+builder.Services.AddScoped<IUploader, Uploader>();
+builder.Services.AddScoped<ITranslator, Translator>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -25,3 +29,37 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+
+//using document_translator.Components;
+//using Microsoft.Extensions.DependencyInjection;
+
+//var builder = WebApplication.CreateBuilder(args);
+
+//// Combine services configuration from both files
+//builder.Services.AddRazorComponents()
+//    .AddInteractiveServerComponents();
+
+//// Add HttpClient configuration from Startup.cs
+//builder.Services.AddHttpClient<IApiService>(client =>
+//{
+//    client.BaseAddress = new Uri("https://api.example.com");
+//});
+
+
+//var app = builder.Build();
+
+//// Configure request pipeline, combining logic from both files
+//if (!app.Environment.IsDevelopment())
+//{
+//    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+//    app.UseHsts();
+//}
+
+//app.UseHttpsRedirection();
+//app.UseStaticFiles();
+//app.UseAntiforgery();
+//app.MapRazorComponents<App>()
+//    .AddInteractiveServerRenderMode();
+
+//app.Run();

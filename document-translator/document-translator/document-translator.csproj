@@ -9,7 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.AI.Translation.Document" Version="1.0.0" />
+    <PackageReference Include="Azure.Identity" Version="1.10.4" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
     <PackageReference Include="Radzen.Blazor" Version="4.25.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Services\HelperClasses\" />
   </ItemGroup>
 
 </Project>
