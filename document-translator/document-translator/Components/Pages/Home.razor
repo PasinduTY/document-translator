@@ -9,6 +9,19 @@
 <div Class="rz-p-0 rz-p-md-12">
     <RadzenCard Class="rz-my-12 rz-mx-auto" Style="max-width: 1000px">
 
+        @* <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-4 p-3">
+                    <RadzenCard>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Multiple file upload</RadzenText>
+                        <RadzenUpload Multiple="true" Url="upload/multiple" Progress=@(args => OnProgress(args, "Multiple file upload")) class="w-100" InputAttributes="@(new Dictionary<string,object>(){{ "aria-label", "select file" }})">
+                        </RadzenUpload>
+                    </RadzenCard>
+
+                </div>
+            </div>
+        </div> *@
+
          <div class="rz-p-sm-12 rz-text-align-center">
         <InputFile OnChange="LoadFiles" multiple />
             <p>@uploadedDocumentCount</p>
