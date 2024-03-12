@@ -1,6 +1,8 @@
-﻿namespace document-translator.Services
+﻿
+using Microsoft.AspNetCore.Components.Forms;
+
+public interface IConverterService
 {
-    public interface IConverter
-{
+    void ConvertToExcel();
 }
-}
+

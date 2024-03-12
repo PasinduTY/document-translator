@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inherits OwningComponentBase
 @inject ITranslatorService iTranslatorService
+@inject IConverterService iConverterService
 
 <PageTitle>Home</PageTitle>
 
@@ -26,6 +27,13 @@
         <InputFile OnChange="LoadFiles" multiple />
             <p>@uploadedDocumentCount</p>
         </div>
+
+        <div class="rz-p-sm-12 rz-text-align-center">
+            <InputFile OnChange="LoadJson" multiple />
+            <p>@uploadedDocumentCount</p>
+        </div>
+
+
 
         <div class="rz-p-sm-12 rz-text-align-center">
            <h4>@translationStatus</h4>
@@ -82,6 +90,12 @@
                 StateHasChanged();
             }
         }
+    }
+
+    private async void LoadJson(InputFileChangeEventArgs e)
+    {
+        iConverterService.ConvertToExcel();
+
     }
 
     void OnChange()

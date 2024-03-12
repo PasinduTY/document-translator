@@ -7,6 +7,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<ITranslatorService,TranslatorService >();
+builder.Services.AddScoped<IConverterService, ConverterService>();
 
 
 var app = builder.Build();
