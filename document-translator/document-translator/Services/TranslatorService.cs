@@ -140,7 +140,7 @@ public class TranslatorService:ITranslatorService
 
     }
 
-    public async Task ConvertedFilesDownloader()
+    public async Task DownloadeConvertedFiles()
     {
          string destinationFolder = @"C:\Users\vibuda.S\Downloads\";
 

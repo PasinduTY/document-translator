@@ -8,7 +8,7 @@ public interface ITranslatorService
 
     Task CleanOutputContainer();
 
-    Task ConvertedFilesDownloader();
+    Task DownloadeConvertedFiles();
 
     Task<bool> Upload(IBrowserFile file, string fileName);
 
