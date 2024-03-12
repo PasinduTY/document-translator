@@ -1,17 +1,141 @@
 ﻿@page "/"
+@using System.Text.Json
+@rendermode InteractiveServer
+@inherits OwningComponentBase
+@inject ITranslatorService iTranslatorService
 
 <PageTitle>Home</PageTitle>
 
-<h1>@currentCount</h1>
-<RadzenButton Text="Hi" @onclick="IncrementCount"></RadzenButton>
-Welcome to your new app.
+<div Class="rz-p-0 rz-p-md-12">
+    <RadzenCard Class="rz-my-12 rz-mx-auto" Style="max-width: 1000px">
 
-@code{
-    private int currentCount = 0;
+         <div class="rz-p-sm-12 rz-text-align-center">
+        <InputFile OnChange="LoadFiles" multiple />
+            <p>@uploadedDocumentCount</p>
+        </div>
 
-    private void IncrementCount()
+        <div class="rz-p-sm-12 rz-text-align-center">
+           <h4>@translationStatus</h4>
+        </div>
+        <div class="rz-p-sm-12 rz-text-align-center">
+            <RadzenLabel Text="Select Value" Component="DropDownBindValue" Style="margin-right: 8px; vertical-align: middle;" />
+            <RadzenDropDown Change="@(args => OnChange())" @bind-Value=@value Data=@dropdownList Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+                <RadzenButton Click=@(onClickTranslate) Text="Translate" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+                <RadzenButton Click=@(onClickDownload) Text="Download" ButtonStyle="ButtonStyle.Primary" style="margin: 80px;" />
+            </RadzenStack>
+        </div>
+
+
+    </RadzenCard>
+</div>
+
+
+@code {
+    RadzenUpload upload;
+    string value;
+    Dictionary<String, Language> languages;
+    private int uploadedDocumentCount = 0;
+    string completionMessage;
+    private string translationStatus="";
+    /*
+    private ITranslator translator { get; set; } = default!;
+
+    protected override void OnInitialized()
+        {
+        translator = ScopedServices.GetRequiredService<ITranslator>();
+    }*/
+
+    //  int customParameter = 1;
+
+    private async void LoadFiles(InputFileChangeEventArgs e)
     {
-        currentCount++;
-        
+
+        foreach (var file in e.GetMultipleFiles())
+        {
+            string fileName = file.Name;
+            bool uploadedOrNot = await iTranslatorService.Upload(file, fileName);
+            if (uploadedOrNot)
+            {
+                uploadedDocumentCount++;
+                StateHasChanged();
+            }
+        }
     }
+
+    void OnChange()
+    {
+
+    }
+
+    List<string> dropdownList = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // Call the API to get languages
+        HttpClient client = new HttpClient();
+        HttpResponseMessage response = await client.GetAsync("https://api.cognitive.microsofttranslator.com/languages?api-version=3.0");
+
+        if (response.IsSuccessStatusCode)
+        {
+            string json = await response.Content.ReadAsStringAsync();
+            // Deserialize JSON and extract languages
+            LanguageResponse? languageResponse = JsonSerializer.Deserialize<LanguageResponse>(json);
+            languages = languageResponse.translation;
+            foreach (var entry in languageResponse.translation)
+            {
+                dropdownList.Add(entry.Value.name);
+            }
+            value = dropdownList.FirstOrDefault();
+
+        }
+    }
+
+    class LanguageResponse
+    {
+        public Dictionary<String, Language> translation { get; set; }
+    }
+
+    class Language
+    {
+        public string name { get; set; }
+        public string nativeName { get; set; }
+        public string dir { get; set; }
+    }
+
+    private void onClickDownload()
+    {
+        iTranslatorService.ConvertedFilesDownloader();
+        iTranslatorService.CleanInputContainer();
+        iTranslatorService.CleanOutputContainer();
+
+    }
+
+    private async void onClickTranslate()
+    {
+        String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
+        bool translatedOrNot = await iTranslatorService.Translate(langCode);
+        if (translatedOrNot)
+        {
+            translationStatus = "Translation is Successful";
+            StateHasChanged();
+        }
+        else
+        {
+            translationStatus = "Translation is not Successful";
+            StateHasChanged();
+
+        }
+    }
+
 }

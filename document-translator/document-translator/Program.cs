@@ -6,9 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<IFileTypeDetection, FileTypeDetection>();
-builder.Services.AddScoped<IUploader, Uploader>();
-builder.Services.AddScoped<ITranslator, Translator>();
+builder.Services.AddScoped<ITranslatorService,TranslatorService >();
+
 
 var app = builder.Build();
 
