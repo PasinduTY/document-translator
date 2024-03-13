@@ -1,8 +1,9 @@
 ﻿
+using Aspose.Cells;
 using Microsoft.AspNetCore.Components.Forms;
 
 public interface IConverterService
 {
-    void ConvertToExcel();
+    Task<Workbook> ConvertToExcelAsync(IBrowserFile file);
 }
 

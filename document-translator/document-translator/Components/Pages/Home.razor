@@ -94,7 +94,13 @@
 
     private async void LoadJson(InputFileChangeEventArgs e)
     {
-        iConverterService.ConvertToExcel();
+        foreach (var file in e.GetMultipleFiles())
+        {
+            //Console.WriteLine(file.Name);
+            iConverterService.ConvertToExcelAsync(file);
+            
+            
+        }
 
     }
 

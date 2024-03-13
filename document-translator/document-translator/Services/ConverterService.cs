@@ -1,11 +1,21 @@
 ﻿using Aspose.Cells;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Identity.Client.Extensibility;
 using Newtonsoft.Json;
 public class ConverterService : IConverterService
 {
-    public void ConvertToExcel()
+    public async Task<Workbook> ConvertToExcelAsync(IBrowserFile file)
     {
+        var memoryStream = new MemoryStream();
 
-        string json = File.ReadAllText(@"C:\Users\pasindu.si\Downloads\es-es.json");
+        await file.OpenReadStream().CopyToAsync(memoryStream);
+        memoryStream.Seek(0, SeekOrigin.Begin);
+
+        var reader = new StreamReader(memoryStream);
+        string json = await reader.ReadToEndAsync();
+
+
+        // Now you can use the fileContent string where a string is expected
         var jsonObject = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
 
         Workbook keysWorkbook = new Workbook();
@@ -22,12 +32,18 @@ public class ConverterService : IConverterService
             row++;
         }
 
-        keysWorkbook.Save(@"C:\\Users\\pasindu.si\\Downloads\Keys.xlsx");
-        valuesWorkbook.Save(@"C:\\Users\\pasindu.si\\Downloads\Values.xlsx");
+        Guid guid = Guid.NewGuid();
+
+        // Print the generated GUID
+        //Console.WriteLine($"Generated GUID: {guid}");
+
+
+        keysWorkbook.Save(@$"C:\\Users\\pasindu.si\\Downloads\Keys_{guid}.xlsx");
+        valuesWorkbook.Save(@$"C:\\Users\\pasindu.si\\Downloads\Values_{guid}.xlsx");
+        return keysWorkbook;
 
         CombineToJson();
-
-
+        
     }
 
     public void CombineToJson() {
@@ -56,4 +72,3 @@ public class ConverterService : IConverterService
 
 
 }
-
