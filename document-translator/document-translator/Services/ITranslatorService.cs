@@ -1,4 +1,5 @@
 ﻿
+using Aspose.Cells;
 using Microsoft.AspNetCore.Components.Forms;
 
 public interface ITranslatorService
@@ -12,6 +13,9 @@ public interface ITranslatorService
 
     Task<bool> Upload(IBrowserFile file, string fileName);
 
+    Task<bool> Upload(Workbook file);
+
+    bool getFileType(string fileExtension);
 
 }
 

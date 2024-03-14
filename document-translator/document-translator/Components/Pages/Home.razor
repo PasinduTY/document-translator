@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using System.Text.Json
+@using Aspose.Cells
 @rendermode InteractiveServer
 @inherits OwningComponentBase
 @inject ITranslatorService iTranslatorService
@@ -27,14 +28,14 @@
         <InputFile OnChange="LoadFiles" multiple />
             <p>@uploadedDocumentCount</p>
         </div>
+   <!--
+
 
         <div class="rz-p-sm-12 rz-text-align-center">
             <InputFile OnChange="LoadJson" multiple />
             <p>@uploadedDocumentCount</p>
         </div>
-
-
-
+     -->
         <div class="rz-p-sm-12 rz-text-align-center">
            <h4>@translationStatus</h4>
         </div>
@@ -67,12 +68,14 @@
     private int uploadedDocumentCount = 0;
     string completionMessage;
     private string translationStatus="";
+    private Workbook[] books;
+    private bool isJson=false;
     /*
     private ITranslator translator { get; set; } = default!;
 
     protected override void OnInitialized()
-        {
-        translator = ScopedServices.GetRequiredService<ITranslator>();
+    {
+    translator = ScopedServices.GetRequiredService<ITranslator>();
     }*/
 
     //  int customParameter = 1;
@@ -82,15 +85,48 @@
 
         foreach (var file in e.GetMultipleFiles())
         {
-            string fileName = file.Name;
-            bool uploadedOrNot = await iTranslatorService.Upload(file, fileName);
-            if (uploadedOrNot)
+            string fileType = file.ContentType;
+            string fileExtension = fileType.Split('/')[1];
+            if (iTranslatorService.getFileType(fileExtension))
             {
-                uploadedDocumentCount++;
-                StateHasChanged();
+                isJson = true;
+                books = await iConverterService.ConvertToExcelAsync(file);
+                bool uploadedOrNot = await iTranslatorService.Upload(books[1]);
+                if (uploadedOrNot)
+                {
+                    uploadedDocumentCount++;
+                    StateHasChanged();
+                }
+                // books[0].Save(books[0].FileName);
+            }
+            else
+            {
+                string fileName = file.Name;
+                bool uploadedOrNot = await iTranslatorService.Upload(file, fileName);
+                if (uploadedOrNot)
+                {
+                    uploadedDocumentCount++;
+                    StateHasChanged();
+                }
             }
         }
+        /*
+        private async void LoadJson(InputFileChangeEventArgs e)
+        {
+
+            foreach (var file in e.GetMultipleFiles())
+            {
+                Console.WriteLine(file.Name);
+                Workbook[] books = await iConverterService.ConvertToExcelAsync(file);
+                // books[0].Save(books[0].FileName);
+                bool abc = await iTranslatorService.Upload(books[1]);
+                bool a= await iTranslatorService.Translate("de");
+            }
+
+        }
+        */
     }
+<<<<<<< Updated upstream
 
     private async void LoadJson(InputFileChangeEventArgs e)
     {
@@ -104,6 +140,8 @@
 
     }
 
+=======
+>>>>>>> Stashed changes
     void OnChange()
     {
 
@@ -146,14 +184,6 @@
         public string dir { get; set; }
     }
 
-    private void onClickDownload()
-    {
-        iTranslatorService.DownloadeConvertedFiles();
-        iTranslatorService.CleanInputContainer();
-        iTranslatorService.CleanOutputContainer();
-
-    }
-
     private async void onClickTranslate()
     {
         String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
@@ -170,5 +200,22 @@
 
         }
     }
+    private void onClickDownload()
+    {
+        if (isJson)
+        {
+            iConverterService.CombineExcelToJson(books);
+            iTranslatorService.CleanInputContainer();
+            iTranslatorService.CleanOutputContainer();
+            isJson = false;
+        }
+        else
+        {
+            iTranslatorService.DownloadeConvertedFiles();
+            iTranslatorService.CleanInputContainer();
+            iTranslatorService.CleanOutputContainer();
+        }
 
+
+    }
 }

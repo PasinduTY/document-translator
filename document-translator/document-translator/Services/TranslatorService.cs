@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Components.Forms;
+using Aspose.Cells;
 public class TranslatorService:ITranslatorService
 {
     private IConfiguration _configuration;
@@ -11,6 +12,10 @@ public class TranslatorService:ITranslatorService
     private readonly string targetUrl;
     private readonly string key;
     private readonly string blobServiceClientEndpoint;
+    private readonly string  timeoutPeriodAsString;
+    private readonly string timeIntervalPeriodAsString;
+    private readonly int timeoutPeriod;
+    private readonly int timeIntervalPeriod;
     static readonly string route = "/batches";
 
     public TranslatorService(IConfiguration configuration)
@@ -21,8 +26,22 @@ public class TranslatorService:ITranslatorService
         targetUrl = _configuration.GetConnectionString("Output.Container.Url");
         key = _configuration.GetConnectionString("Translator.Key");
         blobServiceClientEndpoint = _configuration.GetConnectionString("Blob.Service.Client");
+        timeoutPeriodAsString = _configuration.GetConnectionString("Timeout.Period");
+        timeIntervalPeriodAsString = _configuration.GetConnectionString("Time.Interval.Period");
+        timeoutPeriod = int.Parse(timeoutPeriodAsString);
+        timeIntervalPeriod= int.Parse(timeIntervalPeriodAsString);
     }
 
+    public bool getFileType(string fileExtension)
+    {
+        switch (fileExtension)
+        {
+            case "json":
+                return true;
+            default:
+                return false;
+        }
+    }
     public async Task<bool> Translate(string languageCode)
     {
 
@@ -53,7 +72,7 @@ public class TranslatorService:ITranslatorService
 
                 DateTime startTime = DateTime.Now;
 
-                while ((DateTime.Now - startTime) <= TimeSpan.FromMinutes(1))
+                while ((DateTime.Now - startTime) <= TimeSpan.FromMinutes(timeoutPeriod))
                 {
                     using HttpRequestMessage jobStatusRequest = new HttpRequestMessage();
                     jobStatusRequest.Method = HttpMethod.Get;
@@ -82,7 +101,7 @@ public class TranslatorService:ITranslatorService
                     }
                     Console.WriteLine("Here we go");
 
-                    await Task.Delay(3000);
+                    await Task.Delay(timeIntervalPeriod);
 
                 }
                 Console.WriteLine("Timeout");
@@ -103,16 +122,10 @@ public class TranslatorService:ITranslatorService
         try
         {
             var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
-
-            // Replace the localFilePath with the actual file path you want to upload
-            // string localFilePath = @"D:/Files for testing/Test.xlsx";
-            // string fileName = Path.GetFileName(localFilePath);
-            //  Console.WriteLine(fileName);
-
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
             await containerClient.UploadBlobAsync(fileName, file.OpenReadStream());
             // BlobClient blobClient = containerClient.GetBlobClient(fileName);
-            Console.WriteLine("Uploadinged" + fileName);
+            Console.WriteLine("Uploaded" + fileName);
             return true;
             //await blobClient.UploadAsync(localFilePath, true);
         }
@@ -123,6 +136,35 @@ public class TranslatorService:ITranslatorService
         }
     }
 
+
+    public async Task<bool> Upload(Workbook file)
+    {
+        try
+        {
+            string fileName = $"{file.FileName}.xlsx";
+            var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
+
+           var stream = new MemoryStream();
+           
+                // Save the workbook to the MemoryStream
+                file.Save(stream, SaveFormat.Xlsx);
+
+                // Reset the stream position to the beginning
+                stream.Position = 0;
+
+                BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
+                await containerClient.UploadBlobAsync(fileName, stream);
+           
+           // Console.WriteLine("Uploaded" + fileName);
+            return true;
+            //await blobClient.UploadAsync(localFilePath, true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading to Blob storage: {ex.Message}");
+            return false;
+        }
+    }
 
     public async Task CleanInputContainer()
     {
