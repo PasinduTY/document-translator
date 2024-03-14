@@ -36,7 +36,7 @@
                  <p>@uploadedDocumentCount</p>
              </div>
           -->
-        <div class="rz-p-sm-12 rz-text-align-center">
+        <div class="rz-p-sm-1 rz-text-align-center">
             <h4>@translationStatus</h4>
         </div>
         <div class="rz-p-sm-12 rz-text-align-center">
@@ -44,11 +44,24 @@
             <RadzenDropDown Change="@(args => OnChange())" @bind-Value=@value Data=@dropdownList Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
         </div>
 
+        <RadzenStack AlignItems="AlignItems.Center" Class="rz-m-12" Gap="2rem">
+            <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" hidden="@hideLoading" />
+            <RadzenAlert AllowClose="false" AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" hidden ="@hideSuccess">
+                Translation Successful
+            </RadzenAlert>
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" hidden = "@hideFail">
+                Translation Unsuccessful
+            </RadzenAlert>
+            
+        </RadzenStack>
+
+
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
                 <RadzenButton Click=@(onClickTranslate) Text="Translate" ButtonStyle="ButtonStyle.Primary" />
             </RadzenStack>
         </div>
+
 
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
@@ -63,6 +76,7 @@
 
 @code {
     RadzenUpload upload;
+    private const bool V = true;
     string value;
     Dictionary<String, Language> languages;
     private int uploadedDocumentCount = 0;
@@ -70,6 +84,10 @@
     private string translationStatus = "";
     private Workbook[] books;
     private bool isJson = false;
+    bool hideLoading = true;
+    bool hideSuccess = true;
+    bool hideFail = true;
+
     /*
     private ITranslator translator { get; set; } = default!;
 
@@ -92,6 +110,7 @@
                 isJson = true;
                 books = await iConverterService.ConvertToExcelAsync(file);
                 bool uploadedOrNot = await iTranslatorService.Upload(books[1]);
+
                 if (uploadedOrNot)
                 {
                     uploadedDocumentCount++;
@@ -112,24 +131,25 @@
         }
         /*
         private async void LoadJson(InputFileChangeEventArgs e)
-        {
+            {
 
             foreach (var file in e.GetMultipleFiles())
-            {
+                {
                 Console.WriteLine(file.Name);
                 Workbook[] books = await iConverterService.ConvertToExcelAsync(file);
                 // books[0].Save(books[0].FileName);
                 bool abc = await iTranslatorService.Upload(books[1]);
                 bool a= await iTranslatorService.Translate("de");
-            }
+    }
 
-        }
-        */
+    }
+    */
     }
     void OnChange()
     {
 
     }
+
 
     List<string> dropdownList = new List<string>();
 
@@ -153,6 +173,8 @@
             }
             value = dropdownList.FirstOrDefault();
 
+
+
         }
     }
 
@@ -170,20 +192,32 @@
 
     private async void onClickTranslate()
     {
+        if (value == "")
+        {
+            
+        }
+        hideLoading = false;
         String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
         bool translatedOrNot = await iTranslatorService.Translate(langCode);
+        hideLoading = true;
+        
+
         if (translatedOrNot)
         {
-            translationStatus = "Translation is Successful";
+            hideSuccess = false;
             StateHasChanged();
         }
         else
         {
-            translationStatus = "Translation is not Successful";
+            hideFail = false;
             StateHasChanged();
 
         }
+
+        
     }
+
+
     private void onClickDownload()
     {
         if (isJson)
