@@ -1,31 +1,12 @@
 ﻿using Aspose.Cells;
-<<<<<<< Updated upstream
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.Identity.Client.Extensibility;
-=======
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Components.Forms;
->>>>>>> Stashed changes
 using Newtonsoft.Json;
 
 public class ConverterService : IConverterService
 {
-<<<<<<< Updated upstream
-    public async Task<Workbook> ConvertToExcelAsync(IBrowserFile file)
-    {
-        var memoryStream = new MemoryStream();
-
-        await file.OpenReadStream().CopyToAsync(memoryStream);
-        memoryStream.Seek(0, SeekOrigin.Begin);
-
-        var reader = new StreamReader(memoryStream);
-        string json = await reader.ReadToEndAsync();
-
-
-        // Now you can use the fileContent string where a string is expected
-=======
     private IConfiguration _configuration;
- 
+
     private readonly string blobServiceClientEndpoint;
 
     public ConverterService(IConfiguration configuration)
@@ -41,16 +22,15 @@ public class ConverterService : IConverterService
 
         var memoryStream = new MemoryStream();
 
-         await file.OpenReadStream().CopyToAsync(memoryStream);
-         
+        await file.OpenReadStream().CopyToAsync(memoryStream);
+
         memoryStream.Seek(0, SeekOrigin.Begin);
 
-         var reader = new StreamReader(memoryStream);
-                
-         string json = await reader.ReadToEndAsync();
-    
-            // Now you can use the fileContent string where a string is expected
->>>>>>> Stashed changes
+        var reader = new StreamReader(memoryStream);
+
+        string json = await reader.ReadToEndAsync();
+
+        // Now you can use the fileContent string where a string is expected
         var jsonObject = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
 
         Workbook keysWorkbook = new Workbook();
@@ -70,27 +50,13 @@ public class ConverterService : IConverterService
         keysWorkbook.FileName = $"{guid}";
         valuesWorkbook.FileName = $"{guid}";
 
-<<<<<<< Updated upstream
-        Guid guid = Guid.NewGuid();
-
-        // Print the generated GUID
-        //Console.WriteLine($"Generated GUID: {guid}");
-
-
-        keysWorkbook.Save(@$"C:\\Users\\pasindu.si\\Downloads\Keys_{guid}.xlsx");
-        valuesWorkbook.Save(@$"C:\\Users\\pasindu.si\\Downloads\Values_{guid}.xlsx");
-        return keysWorkbook;
-
-        CombineToJson();
-        
-=======
         //valuesWorksheet.FileName = "ss";
         workbooks.Add(keysWorkbook);
         workbooks.Add(valuesWorkbook);
-       // keysWorkbook.Save("Keys.xlsx");
-       // valuesWorkbook.Save("Values.xlsx");
+        // keysWorkbook.Save("Keys.xlsx");
+        // valuesWorkbook.Save("Values.xlsx");
         return workbooks.ToArray();
-        
+
         /*
         //CombineToJson();
         var stream = file.OpenReadStream();
@@ -108,10 +74,10 @@ public class ConverterService : IConverterService
             //keysWorkbook.Save("Keys.xlsx");
         }
         */
->>>>>>> Stashed changes
     }
 
-    public async Task CombineExcelToJson(Workbook[] books) {
+    public async Task CombineExcelToJson(Workbook[] books)
+    {
         //Workbook keysWorkbook = new Workbook(@"C:\\Users\\pasindu.si\\Downloads\Keys.xlsx");
         Worksheet keysWorksheet = books[0].Worksheets[0];
 
@@ -121,11 +87,11 @@ public class ConverterService : IConverterService
         BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("translateddocs");
         Console.WriteLine(books[1].FileName);
         // Get a reference to the blob
-        BlobClient blobClient = containerClient.GetBlobClient($"{books[1].FileName}.xlsx" );
+        BlobClient blobClient = containerClient.GetBlobClient($"{books[1].FileName}.xlsx");
 
         // Download the blob content to a MemoryStream
         var memoryStream = new MemoryStream();
-         blobClient.DownloadTo(memoryStream);
+        blobClient.DownloadTo(memoryStream);
 
         // Create a workbook from the MemoryStream
         Workbook valuesWorkbook = new Workbook(memoryStream);
@@ -148,3 +114,4 @@ public class ConverterService : IConverterService
     }
 
 }
+

@@ -12,32 +12,32 @@
     <RadzenCard Class="rz-my-12 rz-mx-auto" Style="max-width: 1000px">
 
         @* <div class="container-fluid">
-            <div class="row justify-content-center">
-                <div class="col-md-4 p-3">
-                    <RadzenCard>
-                        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Multiple file upload</RadzenText>
-                        <RadzenUpload Multiple="true" Url="upload/multiple" Progress=@(args => OnProgress(args, "Multiple file upload")) class="w-100" InputAttributes="@(new Dictionary<string,object>(){{ "aria-label", "select file" }})">
-                        </RadzenUpload>
-                    </RadzenCard>
+        <div class="row justify-content-center">
+        <div class="col-md-4 p-3">
+        <RadzenCard>
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Multiple file upload</RadzenText>
+        <RadzenUpload Multiple="true" Url="upload/multiple" Progress=@(args => OnProgress(args, "Multiple file upload")) class="w-100" InputAttributes="@(new Dictionary<string,object>(){{ "aria-label", "select file" }})">
+        </RadzenUpload>
+        </RadzenCard>
 
-                </div>
-            </div>
+        </div>
+        </div>
         </div> *@
 
-         <div class="rz-p-sm-12 rz-text-align-center">
-        <InputFile OnChange="LoadFiles" multiple />
+        <div class="rz-p-sm-12 rz-text-align-center">
+            <InputFile OnChange="LoadFiles" multiple />
             <p>@uploadedDocumentCount</p>
         </div>
-   <!--
+        <!--
 
 
+             <div class="rz-p-sm-12 rz-text-align-center">
+                 <InputFile OnChange="LoadJson" multiple />
+                 <p>@uploadedDocumentCount</p>
+             </div>
+          -->
         <div class="rz-p-sm-12 rz-text-align-center">
-            <InputFile OnChange="LoadJson" multiple />
-            <p>@uploadedDocumentCount</p>
-        </div>
-     -->
-        <div class="rz-p-sm-12 rz-text-align-center">
-           <h4>@translationStatus</h4>
+            <h4>@translationStatus</h4>
         </div>
         <div class="rz-p-sm-12 rz-text-align-center">
             <RadzenLabel Text="Select Value" Component="DropDownBindValue" Style="margin-right: 8px; vertical-align: middle;" />
@@ -67,9 +67,9 @@
     Dictionary<String, Language> languages;
     private int uploadedDocumentCount = 0;
     string completionMessage;
-    private string translationStatus="";
+    private string translationStatus = "";
     private Workbook[] books;
-    private bool isJson=false;
+    private bool isJson = false;
     /*
     private ITranslator translator { get; set; } = default!;
 
@@ -126,22 +126,6 @@
         }
         */
     }
-<<<<<<< Updated upstream
-
-    private async void LoadJson(InputFileChangeEventArgs e)
-    {
-        foreach (var file in e.GetMultipleFiles())
-        {
-            //Console.WriteLine(file.Name);
-            iConverterService.ConvertToExcelAsync(file);
-            
-            
-        }
-
-    }
-
-=======
->>>>>>> Stashed changes
     void OnChange()
     {
 

@@ -4,7 +4,7 @@ using System.Text.Json;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Components.Forms;
 using Aspose.Cells;
-public class TranslatorService:ITranslatorService
+public class TranslatorService : ITranslatorService
 {
     private IConfiguration _configuration;
     private readonly string endpoint;
@@ -12,7 +12,7 @@ public class TranslatorService:ITranslatorService
     private readonly string targetUrl;
     private readonly string key;
     private readonly string blobServiceClientEndpoint;
-    private readonly string  timeoutPeriodAsString;
+    private readonly string timeoutPeriodAsString;
     private readonly string timeIntervalPeriodAsString;
     private readonly int timeoutPeriod;
     private readonly int timeIntervalPeriod;
@@ -29,7 +29,7 @@ public class TranslatorService:ITranslatorService
         timeoutPeriodAsString = _configuration.GetConnectionString("Timeout.Period");
         timeIntervalPeriodAsString = _configuration.GetConnectionString("Time.Interval.Period");
         timeoutPeriod = int.Parse(timeoutPeriodAsString);
-        timeIntervalPeriod= int.Parse(timeIntervalPeriodAsString);
+        timeIntervalPeriod = int.Parse(timeIntervalPeriodAsString);
     }
 
     public bool getFileType(string fileExtension)
@@ -144,18 +144,18 @@ public class TranslatorService:ITranslatorService
             string fileName = $"{file.FileName}.xlsx";
             var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
 
-           var stream = new MemoryStream();
-           
-                // Save the workbook to the MemoryStream
-                file.Save(stream, SaveFormat.Xlsx);
+            var stream = new MemoryStream();
 
-                // Reset the stream position to the beginning
-                stream.Position = 0;
+            // Save the workbook to the MemoryStream
+            file.Save(stream, SaveFormat.Xlsx);
 
-                BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
-                await containerClient.UploadBlobAsync(fileName, stream);
-           
-           // Console.WriteLine("Uploaded" + fileName);
+            // Reset the stream position to the beginning
+            stream.Position = 0;
+
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
+            await containerClient.UploadBlobAsync(fileName, stream);
+
+            // Console.WriteLine("Uploaded" + fileName);
             return true;
             //await blobClient.UploadAsync(localFilePath, true);
         }
@@ -184,7 +184,7 @@ public class TranslatorService:ITranslatorService
 
     public async Task DownloadeConvertedFiles()
     {
-         string destinationFolder = @"C:\Users\vibuda.S\Downloads\";
+        string destinationFolder = @"C:\Users\vibuda.S\Downloads\";
 
         var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
         var blobContainerClient = blobServiceClient.GetBlobContainerClient("translateddocs");
@@ -193,12 +193,12 @@ public class TranslatorService:ITranslatorService
 
         foreach (var blobItem in blobs)
         {
-             BlobClient blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
-             blobClient.DownloadTo(destinationFolder + blobItem.Name);
+            BlobClient blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
+            blobClient.DownloadTo(destinationFolder + blobItem.Name);
             Console.WriteLine($"Blob '{blobItem.Name}' downloaded.");
         }
 
-       // return Task.CompletedTask;
+        // return Task.CompletedTask;
     }
 
     public async Task CleanOutputContainer()
