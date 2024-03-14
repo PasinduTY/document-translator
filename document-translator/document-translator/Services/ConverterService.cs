@@ -108,7 +108,7 @@ public class ConverterService : IConverterService
             combinedData.Add(key, value);
         }
 
-        string jsonOutput = JsonConvert.SerializeObject(combinedData);
+        string jsonOutput = JsonConvert.SerializeObject(combinedData, Formatting.Indented);
 
         File.WriteAllText(@"C:\Users\vibuda.S\Downloads\output.json", jsonOutput);
     }
