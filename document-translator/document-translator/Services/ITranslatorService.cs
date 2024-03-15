@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.Forms;
 
 public interface ITranslatorService
 {
-    Task<bool> Translate(string languageCode);
+    Task<bool> Translate(string languageCode,string blobNameOfUploadedDocument);
     Task CleanInputContainer();
 
     Task CleanOutputContainer();
@@ -13,9 +13,8 @@ public interface ITranslatorService
 
     Task<bool> Upload(IBrowserFile file, string fileName);
 
-    Task<bool> Upload(Workbook file);
+    Task<string> Upload(Workbook file);
 
-    bool getFileType(string fileExtension);
 
 }
 

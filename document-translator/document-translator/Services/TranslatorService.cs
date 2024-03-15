@@ -32,23 +32,20 @@ public class TranslatorService : ITranslatorService
         timeIntervalPeriod = int.Parse(timeIntervalPeriodAsString);
     }
 
-    public bool getFileType(string fileExtension)
-    {
-        switch (fileExtension)
-        {
-            case "json":
-                return true;
-            default:
-                return false;
-        }
-    }
-    public async Task<bool> Translate(string languageCode)
+    public async Task<bool> Translate(string languageCode, string blobNameOfUploadedDocument)
     {
 
         using HttpClient client = new HttpClient();
         using HttpRequestMessage request = new HttpRequestMessage();
         {
-            string json = $"{{\"inputs\": [{{\"source\": {{\"sourceUrl\": \"{sourceUrl}\", \"storageSource\": \"AzureBlob\",\"language\": \"en\"}}, \"targets\": [{{\"targetUrl\": \"{targetUrl}\", \"storageSource\": \"AzureBlob\",\"category\": \"general\",\"language\": \"{languageCode}\"}}]}}]}}";
+            string sourceDocumentUrl = $"{sourceUrl}/{blobNameOfUploadedDocument}";
+            string targetDocumentUrl = $"{targetUrl}/{blobNameOfUploadedDocument}";
+
+            string json = $"{{\"inputs\": [{{\"storageType\": \"File\"," +
+              $"\"source\": {{\"sourceUrl\": \"{sourceDocumentUrl}\"}}," +
+              $"\"targets\": [{{\"targetUrl\": \"{targetDocumentUrl}\", \"language\": \"{languageCode}\"}}]}}]}}";
+
+           // string json = $"{{\"inputs\": [{{\"source\": {{\"sourceUrl\": \"{sourceUrl}\", \"storageSource\": \"AzureBlob\",\"language\": \"en\"}}, \"targets\": [{{\"targetUrl\": \"{targetUrl}\", \"storageSource\": \"AzureBlob\",\"category\": \"general\",\"language\": \"{languageCode}\"}}]}}]}}";
 
             Console.WriteLine("GGGGGG");
 
@@ -70,42 +67,7 @@ public class TranslatorService : ITranslatorService
                 Console.WriteLine($"Response Headers:");
                 Console.WriteLine(response.Headers);
 
-                DateTime startTime = DateTime.Now;
-
-                while ((DateTime.Now - startTime) <= TimeSpan.FromMinutes(timeoutPeriod))
-                {
-                    using HttpRequestMessage jobStatusRequest = new HttpRequestMessage();
-                    jobStatusRequest.Method = HttpMethod.Get;
-                    jobStatusRequest.RequestUri = new Uri(jobStatusUrl);
-                    jobStatusRequest.Headers.Add("Ocp-Apim-Subscription-Key", key);
-                    HttpResponseMessage jobStatusRequestResponse = await client.SendAsync(jobStatusRequest);
-
-                    if (jobStatusRequestResponse.StatusCode == HttpStatusCode.OK)
-                    {
-                        using (JsonDocument document = await JsonDocument.ParseAsync(await jobStatusRequestResponse.Content.ReadAsStreamAsync()))
-                        {
-                            var root = document.RootElement;
-                            string status = root.GetProperty("status").GetString();
-                            if (status == "ValidationFailed")
-                            {
-                                return false;
-                            }
-                            if (status == "Succeeded")
-                            {
-                                return true;
-
-                            }
-                            Console.WriteLine($"Status code: {jobStatusRequestResponse.StatusCode}");
-                            Console.WriteLine($"Status: {status}");
-                        }
-                    }
-                    Console.WriteLine("Here we go");
-
-                    await Task.Delay(timeIntervalPeriod);
-
-                }
-                Console.WriteLine("Timeout");
-                return false;
+                return await CheckJobStatusAsync(jobStatusUrl, client, key, timeoutPeriod, timeIntervalPeriod);
 
             }
             else
@@ -117,13 +79,53 @@ public class TranslatorService : ITranslatorService
 
     }
 
+    private async Task<bool> CheckJobStatusAsync(string jobStatusUrl, HttpClient client, string key, int timeoutPeriod, int timeIntervalPeriod)
+    {
+        DateTime startTime = DateTime.Now;
+
+        while ((DateTime.Now - startTime) <= TimeSpan.FromMinutes(timeoutPeriod))
+        {
+            using HttpRequestMessage jobStatusRequest = new HttpRequestMessage();
+            jobStatusRequest.Method = HttpMethod.Get;
+            jobStatusRequest.RequestUri = new Uri(jobStatusUrl);
+            jobStatusRequest.Headers.Add("Ocp-Apim-Subscription-Key", key);
+            HttpResponseMessage jobStatusRequestResponse = await client.SendAsync(jobStatusRequest);
+
+            if (jobStatusRequestResponse.StatusCode == HttpStatusCode.OK)
+            {
+                using (JsonDocument document = await JsonDocument.ParseAsync(await jobStatusRequestResponse.Content.ReadAsStreamAsync()))
+                {
+                    var root = document.RootElement;
+                    string status = root.GetProperty("status").GetString();
+                    if (status == "ValidationFailed")
+                    {
+                        return false;
+                    }
+                    if (status == "Succeeded")
+                    {
+                        return true;
+                    }
+                    Console.WriteLine($"Status code: {jobStatusRequestResponse.StatusCode}");
+                    Console.WriteLine($"Status: {status}");
+                }
+            }
+            Console.WriteLine("Here we go");
+
+            await Task.Delay(timeIntervalPeriod);
+        }
+        Console.WriteLine("Timeout");
+        return false;
+    }
+
     public async Task<bool> Upload(IBrowserFile file, string fileName)
     {
         try
         {
             var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
-            await containerClient.UploadBlobAsync(fileName, file.OpenReadStream());
+            Guid guid = Guid.NewGuid();
+            string blobName = $"{guid}/{fileName}";
+            await containerClient.UploadBlobAsync(blobName, file.OpenReadStream());
             // BlobClient blobClient = containerClient.GetBlobClient(fileName);
             Console.WriteLine("Uploaded" + fileName);
             return true;
@@ -137,7 +139,7 @@ public class TranslatorService : ITranslatorService
     }
 
 
-    public async Task<bool> Upload(Workbook file)
+    public async Task<string> Upload(Workbook file)
     {
         try
         {
@@ -153,16 +155,18 @@ public class TranslatorService : ITranslatorService
             stream.Position = 0;
 
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
-            await containerClient.UploadBlobAsync(fileName, stream);
+            Guid guid = Guid.NewGuid();
+            string blobName = $"{guid}/{fileName}";
+            await containerClient.UploadBlobAsync(blobName, stream);
 
-            // Console.WriteLine("Uploaded" + fileName);
-            return true;
+            Console.WriteLine("Uploaded" + blobName);
+            return blobName;
             //await blobClient.UploadAsync(localFilePath, true);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error uploading to Blob storage: {ex.Message}");
-            return false;
+            return "";
         }
     }
 

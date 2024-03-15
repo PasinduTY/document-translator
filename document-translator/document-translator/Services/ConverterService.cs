@@ -47,8 +47,8 @@ public class ConverterService : IConverterService
             row++;
         }
         Guid guid = Guid.NewGuid();
-        keysWorkbook.FileName = $"{guid}";
-        valuesWorkbook.FileName = $"{guid}";
+        keysWorkbook.FileName = "Keys";
+        valuesWorkbook.FileName = "Values";
 
         //valuesWorksheet.FileName = "ss";
         workbooks.Add(keysWorkbook);
@@ -76,7 +76,7 @@ public class ConverterService : IConverterService
         */
     }
 
-    public async Task CombineExcelToJson(Workbook[] books)
+    public async Task CombineExcelToJson(Workbook[] books, string blobNameOfUploadedDocument)
     {
         //Workbook keysWorkbook = new Workbook(@"C:\\Users\\pasindu.si\\Downloads\Keys.xlsx");
         Worksheet keysWorksheet = books[0].Worksheets[0];
@@ -84,10 +84,10 @@ public class ConverterService : IConverterService
         BlobServiceClient blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
 
         // Get a reference to the container
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("translateddocs");
+        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient($"translateddocs");
         Console.WriteLine(books[1].FileName);
         // Get a reference to the blob
-        BlobClient blobClient = containerClient.GetBlobClient($"{books[1].FileName}.xlsx");
+        BlobClient blobClient = containerClient.GetBlobClient($"{blobNameOfUploadedDocument}");
 
         // Download the blob content to a MemoryStream
         var memoryStream = new MemoryStream();
@@ -110,7 +110,7 @@ public class ConverterService : IConverterService
 
         string jsonOutput = JsonConvert.SerializeObject(combinedData, Formatting.Indented);
 
-        File.WriteAllText(@"C:\\Users\\pasindu.si\\Downloads\output.json", jsonOutput);
+        File.WriteAllText(@"C:\Users\vibuda.S\Downloads\output.json", jsonOutput);
     }
 
 }

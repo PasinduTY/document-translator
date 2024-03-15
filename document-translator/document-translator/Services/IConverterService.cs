@@ -5,6 +5,6 @@ using Microsoft.AspNetCore.Components.Forms;
 public interface IConverterService
 {
     Task<Workbook[]> ConvertToExcelAsync(IBrowserFile file);
-    Task CombineExcelToJson(Workbook[] books);
+    Task CombineExcelToJson(Workbook[] books, string blobNameOfUploadedDocument);
 }
 

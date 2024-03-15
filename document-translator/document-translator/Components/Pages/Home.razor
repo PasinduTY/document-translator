@@ -25,17 +25,15 @@
         </div> *@
 
         <div class="rz-p-sm-12 rz-text-align-center">
-            <InputFile OnChange="LoadFiles" multiple />
+            <InputFile OnChange="LoadFiles" />
             <p>@uploadedDocumentCount</p>
         </div>
-        <!--
-
-
+        @*
              <div class="rz-p-sm-12 rz-text-align-center">
                  <InputFile OnChange="LoadJson" multiple />
                  <p>@uploadedDocumentCount</p>
              </div>
-          -->
+          *@
         <div class="rz-p-sm-1 rz-text-align-center">
             <h4>@translationStatus</h4>
         </div>
@@ -46,13 +44,13 @@
 
         <RadzenStack AlignItems="AlignItems.Center" Class="rz-m-12" Gap="2rem">
             <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" hidden="@hideLoading" />
-            <RadzenAlert AllowClose="false" AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" hidden ="@hideSuccess">
+            <RadzenAlert AllowClose="false" AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" hidden="@hideSuccess">
                 Translation Successful
             </RadzenAlert>
-            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" hidden = "@hideFail">
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" hidden="@hideFail">
                 Translation Unsuccessful
             </RadzenAlert>
-            
+
         </RadzenStack>
 
 
@@ -83,11 +81,11 @@
     string completionMessage;
     private string translationStatus = "";
     private Workbook[] books;
-    private bool isJson = false;
     bool hideLoading = true;
     bool hideSuccess = true;
     bool hideFail = true;
-
+    string fileType;
+    string uploadedDocumentGuid="";
     /*
     private ITranslator translator { get; set; } = default!;
 
@@ -101,21 +99,14 @@
     private async void LoadFiles(InputFileChangeEventArgs e)
     {
 
-        foreach (var file in e.GetMultipleFiles())
-        {
-            string fileType = file.ContentType;
-            string fileExtension = fileType.Split('/')[1];
-            if (iTranslatorService.getFileType(fileExtension))
-            {
-                isJson = true;
-                books = await iConverterService.ConvertToExcelAsync(file);
-                bool uploadedOrNot = await iTranslatorService.Upload(books[1]);
 
-                if (uploadedOrNot)
-                {
-                    uploadedDocumentCount++;
-                    StateHasChanged();
-                }
+        var file = e.GetMultipleFiles().FirstOrDefault();
+        string contentType = file.ContentType;
+        fileType = contentType.Split('/')[1];
+            if (fileType=="json")
+            {
+                books = await iConverterService.ConvertToExcelAsync(file);
+                uploadedDocumentGuid = await iTranslatorService.Upload(books[1]);
                 // books[0].Save(books[0].FileName);
             }
             else
@@ -128,7 +119,12 @@
                     StateHasChanged();
                 }
             }
-        }
+
+            if (uploadedDocumentGuid != "")
+            {
+                uploadedDocumentCount++;
+                StateHasChanged();
+            }
         /*
         private async void LoadJson(InputFileChangeEventArgs e)
             {
@@ -194,13 +190,13 @@
     {
         if (value == "")
         {
-            
+
         }
         hideLoading = false;
         String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
-        bool translatedOrNot = await iTranslatorService.Translate(langCode);
+        bool translatedOrNot = await iTranslatorService.Translate(langCode, uploadedDocumentGuid);
         hideLoading = true;
-        
+
 
         if (translatedOrNot)
         {
@@ -214,18 +210,18 @@
 
         }
 
-        
+
     }
 
 
     private void onClickDownload()
     {
-        if (isJson)
+        if (fileType=="json")
         {
-            iConverterService.CombineExcelToJson(books);
+            iConverterService.CombineExcelToJson(books, uploadedDocumentGuid);
             iTranslatorService.CleanInputContainer();
             iTranslatorService.CleanOutputContainer();
-            isJson = false;
+            
         }
         else
         {
