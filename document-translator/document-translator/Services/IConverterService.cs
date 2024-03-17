@@ -4,7 +4,12 @@ using Microsoft.AspNetCore.Components.Forms;
 
 public interface IConverterService
 {
-    Task<Workbook[]> ConvertToExcelAsync(IBrowserFile file);
-    Task CombineExcelToJson(Workbook[] books, string blobNameOfUploadedDocument);
+    Task<string> ConvertToExcelAsync(IBrowserFile file, string guid);
+    Task<string> CombineExcelToJson(MemoryStream memoryStreamOfTranslatedExcelFile, string operationGuid, string guidOfValueExcel);
+    Task CreateFolderForOperation(string folderName);
+
+    Task DeleteFolderForOperation(string folderName);
+
+    Task<MemoryStream> GetTheMemoryStreamFromValueExcel(string operationGuid,string uploadedDocumentGuid);
 }
 

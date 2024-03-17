@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Components.Forms;
 using Newtonsoft.Json;
+using System;
 
 public class ConverterService : IConverterService
 {
@@ -16,9 +17,8 @@ public class ConverterService : IConverterService
 
     }
 
-    public async Task<Workbook[]> ConvertToExcelAsync(IBrowserFile file)
+    public async Task<string> ConvertToExcelAsync(IBrowserFile file, string operationGuid)
     {
-        List<Workbook> workbooks = new List<Workbook>();
 
         var memoryStream = new MemoryStream();
 
@@ -47,55 +47,24 @@ public class ConverterService : IConverterService
             row++;
         }
         Guid guid = Guid.NewGuid();
-        keysWorkbook.FileName = "Keys";
-        valuesWorkbook.FileName = "Values";
+        keysWorkbook.FileName = $"{guid}";
+        valuesWorkbook.FileName = $"{guid}";
 
-        //valuesWorksheet.FileName = "ss";
-        workbooks.Add(keysWorkbook);
-        workbooks.Add(valuesWorkbook);
-        // keysWorkbook.Save("Keys.xlsx");
-        // valuesWorkbook.Save("Values.xlsx");
-        return workbooks.ToArray();
-
-        /*
-        //CombineToJson();
-        var stream = file.OpenReadStream();
-
-        // Create a MemoryStream and copy the content of the file stream into it
-        using (MemoryStream memoryStream = new MemoryStream())
-        {
-            await stream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0; // Reset the position to the beginning of the stream
-
-            // Load the Excel file directly from the MemoryStream
-            Workbook keysWorkbook = new Workbook(memoryStream);
-            return keysWorkbook;
-            // Save the workbook to a new Excel file
-            //keysWorkbook.Save("Keys.xlsx");
-        }
-        */
+        keysWorkbook.Save(@$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\keys\{operationGuid}\{guid}.xlsx");
+        valuesWorkbook.Save(@$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\values\{operationGuid}\{guid}.xlsx");
+        return $"{guid}";
     }
 
-    public async Task CombineExcelToJson(Workbook[] books, string blobNameOfUploadedDocument)
+    public async Task<string> CombineExcelToJson(MemoryStream memoryStreamOfTranslatedExcelFile, string operationGuid, string guidOfValueExcel)
     {
-        //Workbook keysWorkbook = new Workbook(@"C:\\Users\\pasindu.si\\Downloads\Keys.xlsx");
-        Worksheet keysWorksheet = books[0].Worksheets[0];
+        string keyFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\keys\{operationGuid}\{guidOfValueExcel}.xlsx";
 
-        BlobServiceClient blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
-
-        // Get a reference to the container
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient($"translateddocs");
-        Console.WriteLine(books[1].FileName);
-        // Get a reference to the blob
-        BlobClient blobClient = containerClient.GetBlobClient($"{blobNameOfUploadedDocument}");
-
-        // Download the blob content to a MemoryStream
-        var memoryStream = new MemoryStream();
-        blobClient.DownloadTo(memoryStream);
+        Workbook keysWorkbook = new Workbook(keyFolderPath);
+        Worksheet keysWorksheet = keysWorkbook.Worksheets[0];
 
         // Create a workbook from the MemoryStream
-        Workbook valuesWorkbook = new Workbook(memoryStream);
-        //Workbook valuesWorkbook = new Workbook(@"C:\\Users\\pasindu.si\\Downloads\Values.xlsx");
+        Workbook valuesWorkbook = new Workbook(memoryStreamOfTranslatedExcelFile);
+
         Worksheet valuesWorksheet = valuesWorkbook.Worksheets[0];
 
         Dictionary<string, string> combinedData = new Dictionary<string, string>();
@@ -110,8 +79,35 @@ public class ConverterService : IConverterService
 
         string jsonOutput = JsonConvert.SerializeObject(combinedData, Formatting.Indented);
 
-        File.WriteAllText(@"C:\Users\vibuda.S\Downloads\output.json", jsonOutput);
+        return jsonOutput;
     }
 
+    public async Task CreateFolderForOperation(string folderName)
+    {
+        string keyFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\keys\{folderName}";
+        string valueFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\values\{folderName}";
+
+   
+            Directory.CreateDirectory(keyFolderPath);
+            Directory.CreateDirectory(valueFolderPath);
+    }
+
+    public async Task DeleteFolderForOperation(string folderName)
+    {
+        string keyFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\keys\{folderName}";
+        string valueFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\values\{folderName}";
+
+        Directory.Delete(keyFolderPath,true);
+
+        Directory.Delete(valueFolderPath,true);
+    }
+
+    public async Task<MemoryStream> GetTheMemoryStreamFromValueExcel(string operationGuid, string uploadedDocumentGuid)
+    {
+        string filePath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\values\{operationGuid}\{uploadedDocumentGuid}.xlsx";
+        byte[] fileBytes = File.ReadAllBytes(filePath);
+        MemoryStream memoryStreamOfValueExcelFile = new MemoryStream(fileBytes);
+        return memoryStreamOfValueExcelFile;
+    }
 }
 

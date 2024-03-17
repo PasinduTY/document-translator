@@ -32,20 +32,20 @@ public class TranslatorService : ITranslatorService
         timeIntervalPeriod = int.Parse(timeIntervalPeriodAsString);
     }
 
-    public async Task<bool> Translate(string languageCode, string blobNameOfUploadedDocument)
+    public async Task<bool> Translate(string languageCode, string operationGuid)
     {
 
         using HttpClient client = new HttpClient();
         using HttpRequestMessage request = new HttpRequestMessage();
         {
-            string sourceDocumentUrl = $"{sourceUrl}/{blobNameOfUploadedDocument}";
-            string targetDocumentUrl = $"{targetUrl}/{blobNameOfUploadedDocument}";
 
-            string json = $"{{\"inputs\": [{{\"storageType\": \"File\"," +
-              $"\"source\": {{\"sourceUrl\": \"{sourceDocumentUrl}\"}}," +
-              $"\"targets\": [{{\"targetUrl\": \"{targetDocumentUrl}\", \"language\": \"{languageCode}\"}}]}}]}}";
+            /*  string json = $"{{\"inputs\": [{{\"storageType\": \"File\"," +
+                $"\"source\": {{\"sourceUrl\": \"{sourceDocumentUrl}\"}}," +
+                $"\"targets\": [{{\"targetUrl\": \"{targetDocumentUrl}\", \"language\": \"{languageCode}\"}}]}}]}}";
+            */
+            //string json = $"{{\"inputs\": [{{\"source\": {{\"sourceUrl\": \"{sourceUrl}\", \"storageSource\": \"AzureBlob\",\"language\": \"en\"}}, \"targets\": [{{\"targetUrl\": \"{targetUrl}\", \"storageSource\": \"AzureBlob\",\"category\": \"general\",\"language\": \"{languageCode}\"}}]}}]}}";
 
-           // string json = $"{{\"inputs\": [{{\"source\": {{\"sourceUrl\": \"{sourceUrl}\", \"storageSource\": \"AzureBlob\",\"language\": \"en\"}}, \"targets\": [{{\"targetUrl\": \"{targetUrl}\", \"storageSource\": \"AzureBlob\",\"category\": \"general\",\"language\": \"{languageCode}\"}}]}}]}}";
+            string json = $"{{\"inputs\": [{{\"source\": {{\"sourceUrl\": \"{sourceUrl}\", \"filter\": {{\"prefix\": \"{operationGuid}/\"}}}}, \"targets\": [{{\"targetUrl\": \"{targetUrl}\", \"language\": \"{languageCode}\"}}]}}]}}";
 
             Console.WriteLine("GGGGGG");
 
@@ -117,6 +117,26 @@ public class TranslatorService : ITranslatorService
         return false;
     }
 
+    public async Task<bool> UploadDocuments(MemoryStream memoryStreamOfDocument,string blobName)
+    {
+        try
+        {
+            var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
+            //string blobName = $"{guid}/{fileName}";
+            await containerClient.UploadBlobAsync(blobName, memoryStreamOfDocument);
+            // BlobClient blobClient = containerClient.GetBlobClient(fileName);
+            Console.WriteLine("Uploaded" + blobName);
+            return true;
+            //await blobClient.UploadAsync(localFilePath, true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading to Blob storage: {ex.Message}");
+            return false;
+        }
+    }
+    /*
     public async Task<bool> Upload(IBrowserFile file, string fileName)
     {
         try
@@ -169,7 +189,7 @@ public class TranslatorService : ITranslatorService
             return "";
         }
     }
-
+    */
     public async Task CleanInputContainer()
     {
 
@@ -186,20 +206,41 @@ public class TranslatorService : ITranslatorService
 
     }
 
-    public async Task DownloadeConvertedFiles()
+    public async Task DownloadConvertedFiles(string operationGuid, IConverterService iconverterService)
     {
         string destinationFolder = @"C:\Users\vibuda.S\Downloads\";
 
         var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
         var blobContainerClient = blobServiceClient.GetBlobContainerClient("translateddocs");
 
-        var blobs = blobContainerClient.GetBlobs();
+        var blobs =  blobContainerClient.GetBlobsAsync(prefix: operationGuid);
 
-        foreach (var blobItem in blobs)
+        await foreach (var blobItem in blobs)
         {
             BlobClient blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
-            blobClient.DownloadTo(destinationFolder + blobItem.Name);
-            Console.WriteLine($"Blob '{blobItem.Name}' downloaded.");
+            string blobName = blobItem.Name;
+            string[] parts = blobName.Split('/');
+            string fileName = parts[parts.Length - 1];
+            string secondPartOfTheBlobName = parts[1];
+            if (secondPartOfTheBlobName != "json")
+            {
+                blobClient.DownloadTo(destinationFolder + fileName);
+                Console.WriteLine($"Blob '{blobItem.Name}' downloaded.");
+            }
+            else
+            {
+                string guidOfValueExcelWithExtension = parts[2];
+                string[] seperatedParts = guidOfValueExcelWithExtension.Split('.');
+                string guidOfValueExcel = seperatedParts[0];
+                var memoryStreamOfTranslatedExcelFile = new MemoryStream();
+                blobClient.DownloadTo(memoryStreamOfTranslatedExcelFile);
+                // Create a workbook from the MemoryStream
+               // Workbook translatedValuesWorkbook = new Workbook(memoryStreamOfTranslatedExcelFile);
+                string consvertedJson= await iconverterService.CombineExcelToJson(memoryStreamOfTranslatedExcelFile, operationGuid, guidOfValueExcel);
+                File.WriteAllText(@$"C:\Users\vibuda.S\Downloads\{guidOfValueExcel}.json", consvertedJson);
+
+            }
+
         }
 
         // return Task.CompletedTask;
