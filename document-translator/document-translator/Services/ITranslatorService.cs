@@ -11,7 +11,7 @@ public interface ITranslatorService
 
     Task DownloadeConvertedFiles();
 
-    Task<bool> Upload(IBrowserFile file, string fileName);
+    Task<bool> Upload(MemoryStream memoryStreamOfDocument, string guideAsFileName);
 
     Task<string> Upload(Workbook file);
 

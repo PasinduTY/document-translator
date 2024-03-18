@@ -86,6 +86,7 @@
     bool hideFail = true;
     string fileType;
     string uploadedDocumentGuid="";
+    
     /*
     private ITranslator translator { get; set; } = default!;
 
@@ -100,19 +101,33 @@
     {
 
 
-        var file = e.GetMultipleFiles().FirstOrDefault();
-        string contentType = file.ContentType;
-        fileType = contentType.Split('/')[1];
-            if (fileType=="json")
+        foreach (var file in e.GetMultipleFiles())
+        {
+            string contentType = file.ContentType;
+            fileType = contentType.Split('/')[1];
+            string fileName = file.Name;
+            var stream = file.OpenReadStream();
+            var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            if (fileType == "json")
             {
-                books = await iConverterService.ConvertToExcelAsync(file);
-                uploadedDocumentGuid = await iTranslatorService.Upload(books[1]);
+                uploadedDocumentGuid = await iConverterService.ConvertToExcelAsync(file);
+                string filePath = @$"Values_{uploadedDocumentGuid}.xlsx";
+                byte[] fileBytes = File.ReadAllBytes(filePath);
+                MemoryStream memoryStreamOfValueExcelFile = new MemoryStream(fileBytes);
+                bool uploadedOrNot = await iTranslatorService.Upload(memoryStreamOfValueExcelFile, uploadedDocumentGuid);
+                // uploadedDocumentGuid = await iTranslatorService.Upload(books[1]);
                 // books[0].Save(books[0].FileName);
+                if (uploadedDocumentGuid != "")
+                {
+                    uploadedDocumentCount++;
+                    StateHasChanged();
+                }
             }
             else
             {
-                string fileName = file.Name;
-                bool uploadedOrNot = await iTranslatorService.Upload(file, fileName);
+                bool uploadedOrNot = await iTranslatorService.Upload(memoryStream, fileName);
                 if (uploadedOrNot)
                 {
                     uploadedDocumentCount++;
@@ -120,11 +135,23 @@
                 }
             }
 
-            if (uploadedDocumentGuid != "")
-            {
-                uploadedDocumentCount++;
-                StateHasChanged();
-            }
+        }
+        // else
+            // {
+            //     string fileName = file.Name;
+            //     bool uploadedOrNot = await iTranslatorService.Upload(file, fileName);
+            //     if (uploadedOrNot)
+            //     {
+            //         uploadedDocumentCount++;
+            //         StateHasChanged();
+            //     }
+            // }
+
+            // if (uploadedDocumentGuid != "")
+            // {
+            //     uploadedDocumentCount++;
+            //     StateHasChanged();
+            // }
         /*
         private async void LoadJson(InputFileChangeEventArgs e)
             {

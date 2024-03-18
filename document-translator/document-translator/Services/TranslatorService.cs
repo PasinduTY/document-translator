@@ -117,17 +117,37 @@ public class TranslatorService : ITranslatorService
         return false;
     }
 
-    public async Task<bool> Upload(IBrowserFile file, string fileName)
+    //public async Task<bool> Upload(IBrowserFile file, string fileName)
+    //{
+    //    try
+    //    {
+    //        var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
+    //        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
+    //        Guid guid = Guid.NewGuid();
+    //        string blobName = $"{guid}/{fileName}";
+    //        await containerClient.UploadBlobAsync(blobName, file.OpenReadStream());
+    //        // BlobClient blobClient = containerClient.GetBlobClient(fileName);
+    //        Console.WriteLine("Uploaded" + fileName);
+    //        return true;
+    //        //await blobClient.UploadAsync(localFilePath, true);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Console.WriteLine($"Error uploading to Blob storage: {ex.Message}");
+    //        return false;
+    //    }
+    //}
+    public async Task<bool> Upload(MemoryStream memoryStreamOfDocument, string guideAsFileName)
     {
         try
         {
             var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("inputdocs");
             Guid guid = Guid.NewGuid();
-            string blobName = $"{guid}/{fileName}";
-            await containerClient.UploadBlobAsync(blobName, file.OpenReadStream());
+            string blobName = $"{guideAsFileName}/{guideAsFileName}.xlsx";
+            await containerClient.UploadBlobAsync(blobName, memoryStreamOfDocument);
             // BlobClient blobClient = containerClient.GetBlobClient(fileName);
-            Console.WriteLine("Uploaded" + fileName);
+            Console.WriteLine("Uploaded" + guideAsFileName);
             return true;
             //await blobClient.UploadAsync(localFilePath, true);
         }

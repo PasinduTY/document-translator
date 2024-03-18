@@ -16,19 +16,55 @@ public class ConverterService : IConverterService
 
     }
 
-    public async Task<Workbook[]> ConvertToExcelAsync(IBrowserFile file)
+    public async Task<String> ConvertToExcelAsync(IBrowserFile file)
     {
-        List<Workbook> workbooks = new List<Workbook>();
+        //List<Workbook> workbooks = new List<Workbook>();
+
+        //var memoryStream = new MemoryStream();
+
+        //await file.OpenReadStream().CopyToAsync(memoryStream);
+
+        //memoryStream.Seek(0, SeekOrigin.Begin);
+
+        //var reader = new StreamReader(memoryStream);
+
+        //string json = await reader.ReadToEndAsync();
+
+        //// Now you can use the fileContent string where a string is expected
+        //var jsonObject = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+        //Workbook keysWorkbook = new Workbook();
+        //Worksheet keysWorksheet = keysWorkbook.Worksheets[0];
+
+        //Workbook valuesWorkbook = new Workbook();
+        //Worksheet valuesWorksheet = valuesWorkbook.Worksheets[0];
+
+        //int row = 0;
+        //foreach (var kvp in jsonObject)
+        //{
+        //    keysWorksheet.Cells[row, 0].PutValue(kvp.Key);
+        //    valuesWorksheet.Cells[row, 0].PutValue(kvp.Value);
+        //    row++;
+        //}
+        //Guid guid = Guid.NewGuid();
+        //keysWorkbook.FileName = "Keys";
+        //valuesWorkbook.FileName = "Values";
+
+        ////valuesWorksheet.FileName = "ss";
+        //workbooks.Add(keysWorkbook);
+        //workbooks.Add(valuesWorkbook);
+        //// keysWorkbook.Save("Keys.xlsx");
+        //// valuesWorkbook.Save("Values.xlsx");
+        //return workbooks.ToArray();
 
         var memoryStream = new MemoryStream();
 
         await file.OpenReadStream().CopyToAsync(memoryStream);
-
         memoryStream.Seek(0, SeekOrigin.Begin);
 
         var reader = new StreamReader(memoryStream);
-
         string json = await reader.ReadToEndAsync();
+
 
         // Now you can use the fileContent string where a string is expected
         var jsonObject = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
@@ -46,16 +82,17 @@ public class ConverterService : IConverterService
             valuesWorksheet.Cells[row, 0].PutValue(kvp.Value);
             row++;
         }
-        Guid guid = Guid.NewGuid();
-        keysWorkbook.FileName = "Keys";
-        valuesWorkbook.FileName = "Values";
 
-        //valuesWorksheet.FileName = "ss";
-        workbooks.Add(keysWorkbook);
-        workbooks.Add(valuesWorkbook);
-        // keysWorkbook.Save("Keys.xlsx");
-        // valuesWorkbook.Save("Values.xlsx");
-        return workbooks.ToArray();
+        Guid guid = Guid.NewGuid();
+
+        // Print the generated GUID
+        //Console.WriteLine($"Generated GUID: {guid}");
+
+
+        keysWorkbook.Save(@$"Keys_{guid}.xlsx");
+        valuesWorkbook.Save(@$"Values_{guid}.xlsx");
+        return $"{guid}";
+
 
         /*
         //CombineToJson();
@@ -110,7 +147,7 @@ public class ConverterService : IConverterService
 
         string jsonOutput = JsonConvert.SerializeObject(combinedData, Formatting.Indented);
 
-        File.WriteAllText(@"C:\Users\vibuda.S\Downloads\output.json", jsonOutput);
+        File.WriteAllText(@"C:\\Users\\pasindu.si\\Downloads\output.json", jsonOutput);
     }
 
 }
