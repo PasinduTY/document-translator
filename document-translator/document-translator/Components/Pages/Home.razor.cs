@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using Radzen;
 using System.Text.Json;
 
@@ -60,7 +61,7 @@ namespace document_translator.Components.Pages
                     string fileName = file.Name;
                     blobName = $"{operationGuid}/{fileName}";
                 }
-                uploadedOrNot = await iTranslatorService.UploadDocuments(memoryStreamOfFile, blobName);
+                uploadedOrNot = await iTranslatorService.UploadDocumentsAsync(memoryStreamOfFile, blobName);
                 if (uploadedOrNot)
                 {
                     uploadedDocumentCount++;
@@ -127,7 +128,7 @@ namespace document_translator.Components.Pages
             {
                 isBusy = true;
                 String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
-                bool translatedOrNot = await iTranslatorService.Translate(langCode, operationGuid);
+                bool translatedOrNot = await iTranslatorService.TranslateAsync(langCode, operationGuid);
                 isBusy = false;
 
 
@@ -146,17 +147,10 @@ namespace document_translator.Components.Pages
             }
         }
 
-        private async void onClickDownload()
+        private async Task onClickDownload()
         {
-            //hideSuccess = true
-            hideDownCount = false;
-            await iTranslatorService.DownloadConvertedFiles(operationGuid, iConverterService);
-            if (isFolderForJsonConversionCreated)
-            {
-                iConverterService.DeleteFolderForOperation(operationGuid);
-
-            }
-            
+            await DownloadAsZipFile();
+            // await CleanTheFiles();
             // iTranslatorService.CleanInputContainer();
             // iTranslatorService.CleanOutputContainer();
         }
@@ -164,11 +158,26 @@ namespace document_translator.Components.Pages
         { 
         
         }
-            void ShowNotification(NotificationMessage message)
-        {
-            NotificationService.Notify(message);
 
-            Console.WriteLine($"{message.Severity} notification");
+        private async Task DownloadAsZipFile()
+        {
+            await iTranslatorService.DownloadConvertedFiles(operationGuid);
+            string fileName = "Translated_Files.zip";
+            var fileURL = $"/translated_files_as_zip/{operationGuid}/Translated_Files.zip";
+            await JSRuntime.InvokeVoidAsync("triggerFileDownload", fileName, fileURL);
         }
+
+        private async Task CleanTheFiles()
+        {
+            await iResetService.DeleteZipFolderInRoot(operationGuid);
+            await iResetService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+            await iResetService.DeleteFilesInInputContainerOfOperation(operationGuid);
+
+            if (isFolderForJsonConversionCreated)
+            {
+                await iResetService.DeleteKeyAndValueFolders(operationGuid);
+            }
+        }
+
     }
 }

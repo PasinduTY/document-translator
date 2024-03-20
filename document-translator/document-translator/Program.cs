@@ -1,6 +1,7 @@
 using Aspose.Cells.Charts;
 using document_translator.Components;
 using Radzen;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,17 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<ITranslatorService,TranslatorService >();
 builder.Services.AddScoped<IConverterService, ConverterService>();
-builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<IResetService, ResetService>();
+
+// Configure Serilog for file logging
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File("log.txt") // Specify the log file name
+    .CreateLogger();
+
+// Set up Serilog as the logging provider
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -32,35 +43,4 @@ app.MapRazorComponents<App>()
 app.Run();
 
 
-//using document_translator.Components;
-//using Microsoft.Extensions.DependencyInjection;
 
-//var builder = WebApplication.CreateBuilder(args);
-
-//// Combine services configuration from both files
-//builder.Services.AddRazorComponents()
-//    .AddInteractiveServerComponents();
-
-//// Add HttpClient configuration from Startup.cs
-//builder.Services.AddHttpClient<IApiService>(client =>
-//{
-//    client.BaseAddress = new Uri("https://api.example.com");
-//});
-
-
-//var app = builder.Build();
-
-//// Configure request pipeline, combining logic from both files
-//if (!app.Environment.IsDevelopment())
-//{
-//    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-//    app.UseHsts();
-//}
-
-//app.UseHttpsRedirection();
-//app.UseStaticFiles();
-//app.UseAntiforgery();
-//app.MapRazorComponents<App>()
-//    .AddInteractiveServerRenderMode();
-
-//app.Run();

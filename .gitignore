@@ -3,4 +3,5 @@ bin/
 obj/
 .vs/
 .idea/
+document-translator/document-translator/log.txt
 
