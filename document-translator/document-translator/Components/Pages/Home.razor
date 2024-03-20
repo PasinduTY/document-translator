@@ -211,7 +211,11 @@
     {
         hideSuccess = true;
         await iTranslatorService.DownloadConvertedFiles(operationGuid,iConverterService);
-        iConverterService.DeleteFolderForOperation(operationGuid);
+        if (isFolderForJsonConversionCreated)
+        {
+            iConverterService.DeleteFolderForOperation(operationGuid);
+
+        }
         // iTranslatorService.CleanInputContainer();
         // iTranslatorService.CleanOutputContainer();
     }
