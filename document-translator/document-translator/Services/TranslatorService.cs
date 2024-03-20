@@ -208,7 +208,7 @@ public class TranslatorService : ITranslatorService
 
     public async Task DownloadConvertedFiles(string operationGuid, IConverterService iconverterService)
     {
-        string destinationFolder = @"C:\Users\vibuda.S\Downloads\";
+        string destinationFolder = @"C:\Users\pasindu.si\Downloads\";
 
         var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
         var blobContainerClient = blobServiceClient.GetBlobContainerClient("translateddocs");
@@ -237,7 +237,7 @@ public class TranslatorService : ITranslatorService
                 // Create a workbook from the MemoryStream
                // Workbook translatedValuesWorkbook = new Workbook(memoryStreamOfTranslatedExcelFile);
                 string consvertedJson= await iconverterService.CombineExcelToJson(memoryStreamOfTranslatedExcelFile, operationGuid, guidOfValueExcel);
-                File.WriteAllText(@$"C:\Users\vibuda.S\Downloads\{guidOfValueExcel}.json", consvertedJson);
+                File.WriteAllText(@$"C:\Users\pasindu.si\Downloads\{ guidOfValueExcel}.json", consvertedJson);
 
             }
 

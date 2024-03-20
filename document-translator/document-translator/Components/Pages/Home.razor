@@ -1,23 +1,42 @@
 ﻿@page "/"
 @using System.Text.Json
 @using Aspose.Cells
+@using Radzen
 @rendermode InteractiveServer
 @inherits OwningComponentBase
 @inject ITranslatorService iTranslatorService
 @inject IConverterService iConverterService
+@inject NotificationService NotificationService
 
 <PageTitle>Home</PageTitle>
 
+@* <RadzenCard>
+    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Error</RadzenText>
+    <RadzenButton Text="Show error notification" class="w-100"
+                  ButtonStyle="ButtonStyle.Danger"
+                  Click=@(args => ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error Summary", Detail = "Error Detail", Duration = 4000 })) />
+</RadzenCard> *@
+
 <div Class="rz-p-0 rz-p-md-12">
+
     <RadzenCard Class="rz-my-12 rz-mx-auto" Style="max-width: 1000px">
 
         <div class="rz-p-sm-12 rz-text-align-center">
-            <InputFile OnChange="LoadFiles" multiple/>
-            <p>@uploadedDocumentCount</p>
+            
+            <span class="material-symbols-outlined" style="font-size:xx-large">
+                cloud_upload
+            </span>
+            <div class="custom-input-file">              
+                <span>Upload File</span>
+                <InputFile OnChange="LoadFiles" multiple />
+            </div>
+            @* <p>@uploadedDocumentCount</p> *@
+            
         </div>
-
+        <div><RadzenProgressBar @bind-Value="@percentage" hidden ="@hideProgress"/></div>
+        
         <div class="rz-p-sm-12 rz-text-align-center">
-            <RadzenLabel Text="Select Value" Component="DropDownBindValue" Style="margin-right: 8px; vertical-align: middle;" />
+            <RadzenLabel Text="Target Language" Component="DropDownBindValue" Style="margin-right: 8px; vertical-align: middle;" />
             <RadzenDropDown Change="@(args => OnChange())" @bind-Value=@value Data=@dropdownList Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
         </div>
 
@@ -33,13 +52,24 @@
 
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+                <span class="material-symbols-outlined">
+                    translate
+                </span>
                 <RadzenButton Click=@(onClickTranslate) Text="Translate" ButtonStyle="ButtonStyle.Primary" />
+                <span class="material-symbols-outlined">
+                    cancel
+                </span>
+                <RadzenButton Click=@(onClickTranslate) Text="Cancel" ButtonStyle="ButtonStyle.Primary" />
             </RadzenStack>
         </div>
 
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
-                <RadzenButton Click=@(onClickDownload) Text="Download" ButtonStyle="ButtonStyle.Primary" style="margin: 80px;" />
+                <span class="material-symbols-outlined" style="margin-top:80px">
+                    download
+                </span>
+                <RadzenButton Click=@(onClickDownload) Text="Download" ButtonStyle="ButtonStyle.Primary" style="margin-top:80px" Disabled="@downloadDisable" />
+                
             </RadzenStack>
         </div>
     </RadzenCard>
@@ -53,13 +83,20 @@
     bool hideLoading = true;
     bool hideSuccess = true;
     bool hideFail = true;
+    bool downloadDisable = true;
     string fileType;
     string uploadedDocumentGuid="";
     string operationGuid;
     bool isFolderForJsonConversionCreated=false;
+    bool hideProgress = true;
+    double percentage;
+    private List<IBrowserFile> selectedFiles = new List<IBrowserFile>();
 
     private async void LoadFiles(InputFileChangeEventArgs e)
     {
+        selectedFiles = e.GetMultipleFiles().ToList();
+        int selectedFilesCount = selectedFiles.Count;
+        hideProgress = false;
         Guid guid = Guid.NewGuid();
         operationGuid = $"{guid}";
         foreach (var file in e.GetMultipleFiles())
@@ -94,6 +131,11 @@
             if (uploadedOrNot)
             {
                 uploadedDocumentCount++;
+                percentage = uploadedDocumentCount * 100/ selectedFilesCount;
+                if (percentage == 100)
+                {
+                    hideProgress = true;
+                }
                 StateHasChanged();
             }
         }
@@ -122,7 +164,9 @@
             {
                 dropdownList.Add(entry.Value.name);
             }
-            value = dropdownList.FirstOrDefault();
+            value = " ";/* dropdownList.FirstOrDefault(); */
+
+
         }
     }
 
@@ -142,7 +186,7 @@
     {
         if (value == "")
         {
-
+            //ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error Summary", Detail = "Error Detail", Duration = 4000 });
         }
         hideLoading = false;
         String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
@@ -153,6 +197,7 @@
         if (translatedOrNot)
         {
             hideSuccess = false;
+            downloadDisable = false;
             StateHasChanged();
         }
         else
@@ -164,9 +209,17 @@
 
     private async void onClickDownload()
     {
+        hideSuccess = true;
         await iTranslatorService.DownloadConvertedFiles(operationGuid,iConverterService);
         iConverterService.DeleteFolderForOperation(operationGuid);
         // iTranslatorService.CleanInputContainer();
         // iTranslatorService.CleanOutputContainer();
+    }
+
+    void ShowNotification(NotificationMessage message)
+    {
+        NotificationService.Notify(message);
+        
+        Console.WriteLine($"{message.Severity} notification");
     }
 }

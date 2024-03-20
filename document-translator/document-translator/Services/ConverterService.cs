@@ -50,14 +50,14 @@ public class ConverterService : IConverterService
         keysWorkbook.FileName = $"{guid}";
         valuesWorkbook.FileName = $"{guid}";
 
-        keysWorkbook.Save(@$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\keys\{operationGuid}\{guid}.xlsx");
-        valuesWorkbook.Save(@$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\values\{operationGuid}\{guid}.xlsx");
+        keysWorkbook.Save(@$"temp\keys\{operationGuid}\{guid}.xlsx");
+        valuesWorkbook.Save(@$"temp\values\{operationGuid}\{guid}.xlsx");
         return $"{guid}";
     }
 
     public async Task<string> CombineExcelToJson(MemoryStream memoryStreamOfTranslatedExcelFile, string operationGuid, string guidOfValueExcel)
     {
-        string keyFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\keys\{operationGuid}\{guidOfValueExcel}.xlsx";
+        string keyFolderPath = @$"temp\keys\{operationGuid}\{guidOfValueExcel}.xlsx";
 
         Workbook keysWorkbook = new Workbook(keyFolderPath);
         Worksheet keysWorksheet = keysWorkbook.Worksheets[0];
@@ -84,8 +84,8 @@ public class ConverterService : IConverterService
 
     public async Task CreateFolderForOperation(string folderName)
     {
-        string keyFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\keys\{folderName}";
-        string valueFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\values\{folderName}";
+        string keyFolderPath = @$"temp\keys\{folderName}";
+        string valueFolderPath = @$"temp\values\{folderName}";
 
    
             Directory.CreateDirectory(keyFolderPath);
@@ -94,8 +94,8 @@ public class ConverterService : IConverterService
 
     public async Task DeleteFolderForOperation(string folderName)
     {
-        string keyFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\keys\{folderName}";
-        string valueFolderPath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\values\{folderName}";
+        string keyFolderPath = @$"temp\keys\{folderName}";
+        string valueFolderPath = @$"temp\values\{folderName}";
 
         Directory.Delete(keyFolderPath,true);
 
@@ -104,7 +104,7 @@ public class ConverterService : IConverterService
 
     public async Task<MemoryStream> GetTheMemoryStreamFromValueExcel(string operationGuid, string uploadedDocumentGuid)
     {
-        string filePath = @$"D:\Accur_Translator\document-translator\document-translator\document-translator\temp\values\{operationGuid}\{uploadedDocumentGuid}.xlsx";
+        string filePath = @$"temp\values\{operationGuid}\{uploadedDocumentGuid}.xlsx";
         byte[] fileBytes = File.ReadAllBytes(filePath);
         MemoryStream memoryStreamOfValueExcelFile = new MemoryStream(fileBytes);
         return memoryStreamOfValueExcelFile;

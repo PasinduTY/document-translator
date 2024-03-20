@@ -1,4 +1,6 @@
+using Aspose.Cells.Charts;
 using document_translator.Components;
+using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,8 +10,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<ITranslatorService,TranslatorService >();
 builder.Services.AddScoped<IConverterService, ConverterService>();
-
-
+builder.Services.AddScoped<NotificationService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
