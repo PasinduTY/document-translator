@@ -3,96 +3,138 @@ using System.IO.Compression;
 
 public class ResetService : IResetService
 {
-    private readonly string blobServiceClientEndpoint;
+    private readonly string _blobServiceClientEndpoint;
     private IConfiguration _configuration;
+    private readonly ILogger<ITranslatorService> _logger;
 
-    public ResetService(IConfiguration configuration)
+
+    public ResetService(IConfiguration configuration, ILogger<ITranslatorService> logger)
     {
         _configuration = configuration;
-        blobServiceClientEndpoint = _configuration.GetConnectionString("Blob.Service.Client");
+        _blobServiceClientEndpoint = _configuration.GetConnectionString("Blob.Service.Client");
+        _logger = logger;
     }
     public async Task DeleteKeyAndValueFolders(string operationGuid)
     {
-        string keyFolderPath = @$"Temporary_documents\keys\{operationGuid}";
-        string valuesFolderPath = @$"Temporary_documents\values\{operationGuid}";
+        try
+        {
+            string keyFolderPath = Path.Combine("Temporary_documents", "keys", operationGuid);
+            string valuesFolderPath = Path.Combine("Temporary_documents", "values", operationGuid);
 
-        if (Directory.Exists(keyFolderPath))
-        {
-            await Task.Run(() => Directory.Delete(keyFolderPath, true));
-            Console.WriteLine("Key folder deleted successfully.");
-        }
-        else
-        {
-            Console.WriteLine("Key folder does not exist.");
-        }
+            if (Directory.Exists(keyFolderPath))
+            {
+                await Task.Run(() => Directory.Delete(keyFolderPath, true));
+                _logger.LogInformation("Key folder deleted successfully.");
+            }
+            else
+            {
+                _logger.LogError("Key folder does not exist.");
+            }
 
-        if (Directory.Exists(valuesFolderPath))
-        {
-            await Task.Run(() => Directory.Delete(valuesFolderPath, true));
-            Console.WriteLine("Values folder deleted successfully.");
+            if (Directory.Exists(valuesFolderPath))
+            {
+                await Task.Run(() => Directory.Delete(valuesFolderPath, true));
+                _logger.LogInformation("Values folder deleted successfully.");
+            }
+            else
+            {
+                _logger.LogError("Values folder does not exist.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine("Values folder does not exist.");
+            _logger.LogError(ex, $"An error occurred while deleting key and value folders for operation {operationGuid}");
+            throw; 
         }
     }
 
     public async Task DeleteTranslatedDocumentFolder(string operationGuid)
     {
-        string translatedDocumentFolder = @$"Temporary_documents\translated_documents\{operationGuid}";
+        try
+        {
+            string translatedDocumentFolder = Path.Combine("Temporary_documents", "translated_documents", operationGuid);
 
-        if (Directory.Exists(translatedDocumentFolder))
-        {
-            await Task.Run(() => Directory.Delete(translatedDocumentFolder, true));
-            Console.WriteLine("Key folder deleted successfully.");
+            if (Directory.Exists(translatedDocumentFolder))
+            {
+                await Task.Run(() => Directory.Delete(translatedDocumentFolder, true));
+                _logger.LogInformation("Translated document folder deleted successfully.");
+            }
+            else
+            {
+                _logger.LogInformation("Translated document folder does not exist.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine("Key folder does not exist.");
+            _logger.LogError(ex, $"An error occurred while deleting translated document folder for operation {operationGuid}");
+            throw; 
         }
     }
 
     public async Task DeleteZipFolderInRoot(string operationGuid)
     {
-        string zipFolderPath = @$"wwwroot\translated_files_as_zip\{operationGuid}";
+        try
+        {
+            string zipFolderPath = Path.Combine("wwwroot", "translated_files_as_zip", operationGuid);
 
-        if (Directory.Exists(zipFolderPath))
-        {
-            await Task.Run(() => Directory.Delete(zipFolderPath, true));
-            Console.WriteLine("Key folder deleted successfully.");
+            if (Directory.Exists(zipFolderPath))
+            {
+                await Task.Run(() => Directory.Delete(zipFolderPath, true));
+                _logger.LogInformation("Zip folder deleted successfully.");
+            }
+            else
+            {
+                _logger.LogInformation("Zip folder does not exist.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine("Key folder does not exist.");
+            _logger.LogError(ex, $"An error occurred while deleting zip folder in root for operation {operationGuid}");
+            throw; 
         }
     }
 
     public async Task DeleteFilesInInputContainerOfOperation(string operationGuid)
     {
-        string containerName = "inputdocs";
-
-        var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
-        var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
-
-        await foreach (var blobItem in blobContainerClient.GetBlobsAsync(prefix: operationGuid))
+        try
         {
-            await blobContainerClient.DeleteBlobIfExistsAsync(blobItem.Name);
-            Console.WriteLine($"Blob '{blobItem.Name}' deleted.");
-        }
+            string containerName = "inputdocs";
 
+            var blobServiceClient = new BlobServiceClient(_blobServiceClientEndpoint);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            await foreach (var blobItem in blobContainerClient.GetBlobsAsync(prefix: operationGuid))
+            {
+                await blobContainerClient.DeleteBlobIfExistsAsync(blobItem.Name);
+                _logger.LogInformation($"Blob '{blobItem.Name}' deleted.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"An error occurred while deleting files in input container for operation {operationGuid}");
+            throw; 
+        }
     }
 
     public async Task DeleteFilesInOutputContainerOfOperation(string operationGuid)
     {
-        string containerName = "translateddocs";
-
-        var blobServiceClient = new BlobServiceClient(blobServiceClientEndpoint);
-        var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
-
-        await foreach (var blobItem in blobContainerClient.GetBlobsAsync(prefix: operationGuid))
+        try
         {
-            await blobContainerClient.DeleteBlobIfExistsAsync(blobItem.Name);
-            Console.WriteLine($"Blob '{blobItem.Name}' deleted.");
+            string containerName = "translateddocs";
+
+            var blobServiceClient = new BlobServiceClient(_blobServiceClientEndpoint);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            await foreach (var blobItem in blobContainerClient.GetBlobsAsync(prefix: operationGuid))
+            {
+                await blobContainerClient.DeleteBlobIfExistsAsync(blobItem.Name);
+                _logger.LogInformation($"Blob '{blobItem.Name}' deleted.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"An error occurred while deleting files in output container for operation {operationGuid}");
+            throw; 
         }
     }
 }

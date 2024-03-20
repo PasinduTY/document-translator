@@ -26,7 +26,7 @@ namespace document_translator.Components.Pages
         double percentage;
         private List<IBrowserFile> selectedFiles = new List<IBrowserFile>();
 
-        private async void LoadFiles(InputFileChangeEventArgs e)
+        private async Task LoadFiles(InputFileChangeEventArgs e)
         {
             selectedFiles = e.GetMultipleFiles().ToList();
             int selectedFilesCount = selectedFiles.Count;
@@ -117,7 +117,7 @@ namespace document_translator.Components.Pages
             public string dir { get; set; }
         }
 
-        private async void onClickTranslate()
+        private async Task onClickTranslate()
         {
             if (String.IsNullOrWhiteSpace(value))
             {
@@ -154,7 +154,7 @@ namespace document_translator.Components.Pages
             // iTranslatorService.CleanInputContainer();
             // iTranslatorService.CleanOutputContainer();
         }
-        private async void onClickReset()
+        private async Task onClickReset()
         { 
         
         }
