@@ -14,7 +14,7 @@
     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Error</RadzenText>
     <RadzenButton Text="Show error notification" class="w-100"
                   ButtonStyle="ButtonStyle.Danger"
-                  Click=@(args => ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error Summary", Detail = "Error Detail", Duration = 4000 })) />
+                  Click=@(args => ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error Summary", Detail = "Error Detail" })) />
 </RadzenCard> *@
 
 <div Class="rz-p-0 rz-p-md-12">
@@ -30,200 +30,51 @@
                 <span>Upload File</span>
                 <InputFile OnChange="LoadFiles" multiple />
             </div>
-            @* <p>@uploadedDocumentCount</p> *@
-            
+            <RadzenText TextStyle="TextStyle.Subtitle2" hidden ="@hideCount">@uploadedDocumentCount Documents Uploaded</RadzenText>
+     
         </div>
         <div><RadzenProgressBar @bind-Value="@percentage" hidden ="@hideProgress"/></div>
         
-        <div class="rz-p-sm-12 rz-text-align-center">
+        <div class="rz-p-sm-10 rz-text-align-center">
             <RadzenLabel Text="Target Language" Component="DropDownBindValue" Style="margin-right: 8px; vertical-align: middle;" />
             <RadzenDropDown Change="@(args => OnChange())" @bind-Value=@value Data=@dropdownList Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
         </div>
 
-        <RadzenStack AlignItems="AlignItems.Center" Class="rz-m-12" Gap="2rem">
-            <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" hidden="@hideLoading" />
+            @* <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" hidden="@hideLoading " /> *@
+        
+        <div class="d-flex justify-content-center">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                
+                <RadzenButton Click=@(onClickTranslate) Text="Translate" Icon="translate" ButtonStyle="ButtonStyle.Primary" IsBusy="@isBusy" />
+                <RadzenButton Click=@(onClickReset) Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Primary"  />
+                
+            </RadzenStack>
+            
+        </div>
+        <div>
             <RadzenAlert AllowClose="false" AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" hidden="@hideSuccess">
                 Translation Successful
             </RadzenAlert>
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" hidden="@hideFail">
                 Translation Unsuccessful
             </RadzenAlert>
-        </RadzenStack>
-
-        <div class="d-flex justify-content-center">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
-                <span class="material-symbols-outlined">
-                    translate
-                </span>
-                <RadzenButton Click=@(onClickTranslate) Text="Translate" ButtonStyle="ButtonStyle.Primary" />
-                <span class="material-symbols-outlined">
-                    cancel
-                </span>
-                <RadzenButton Click=@(onClickTranslate) Text="Cancel" ButtonStyle="ButtonStyle.Primary" />
-            </RadzenStack>
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" hidden ="@hideChooseAlert">
+                Please select a Language
+            </RadzenAlert>
         </div>
 
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
-                <span class="material-symbols-outlined" style="margin-top:80px">
-                    download
-                </span>
-                <RadzenButton Click=@(onClickDownload) Text="Download" ButtonStyle="ButtonStyle.Primary" style="margin-top:80px" Disabled="@downloadDisable" />
+                
+                <RadzenButton Click=@(onClickDownload) Text="Download" Icon="download" ButtonStyle="ButtonStyle.Primary" style="margin-top:80px" hidden="@hideDownload" />
                 
             </RadzenStack>
+            
+        </div>
+        <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <RadzenText TextStyle="TextStyle.Subtitle2" hidden="@hideDownCount">@uploadedDocumentCount Documents Downloaded</RadzenText>
         </div>
     </RadzenCard>
 </div>
 
 
-@code {
-    string value;
-    Dictionary<String, Language> languages;
-    private int uploadedDocumentCount = 0;
-    bool hideLoading = true;
-    bool hideSuccess = true;
-    bool hideFail = true;
-    bool downloadDisable = true;
-    string fileType;
-    string uploadedDocumentGuid="";
-    string operationGuid;
-    bool isFolderForJsonConversionCreated=false;
-    bool hideProgress = true;
-    double percentage;
-    private List<IBrowserFile> selectedFiles = new List<IBrowserFile>();
-
-    private async void LoadFiles(InputFileChangeEventArgs e)
-    {
-        selectedFiles = e.GetMultipleFiles().ToList();
-        int selectedFilesCount = selectedFiles.Count;
-        hideProgress = false;
-        Guid guid = Guid.NewGuid();
-        operationGuid = $"{guid}";
-        foreach (var file in e.GetMultipleFiles())
-        {
-            string blobName="";
-            MemoryStream memoryStreamOfFile;
-            bool uploadedOrNot;
-            string contentType = file.ContentType;
-            fileType = contentType.Split('/')[1];
-
-            if (fileType == "json")
-            {
-                if (isFolderForJsonConversionCreated!=true)
-                {
-                    iConverterService.CreateFolderForOperation(operationGuid);
-                    isFolderForJsonConversionCreated = true;
-                }
-                uploadedDocumentGuid = await iConverterService.ConvertToExcelAsync(file, operationGuid);
-                memoryStreamOfFile = await iConverterService.GetTheMemoryStreamFromValueExcel(operationGuid, uploadedDocumentGuid);
-                blobName = $"{operationGuid}/json/{uploadedDocumentGuid}.xlsx";
-            }
-            else
-            {
-                var stream = file.OpenReadStream();
-                memoryStreamOfFile = new MemoryStream();
-                await stream.CopyToAsync(memoryStreamOfFile);
-                memoryStreamOfFile.Position = 0;
-                string fileName = file.Name;
-                blobName = $"{operationGuid}/{fileName}";
-            }
-            uploadedOrNot = await iTranslatorService.UploadDocuments(memoryStreamOfFile, blobName);
-            if (uploadedOrNot)
-            {
-                uploadedDocumentCount++;
-                percentage = uploadedDocumentCount * 100/ selectedFilesCount;
-                if (percentage == 100)
-                {
-                    hideProgress = true;
-                }
-                StateHasChanged();
-            }
-        }
-    }
-    void OnChange()
-    {
-    }
-
-    List<string> dropdownList = new List<string>();
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-
-        // Call the API to get languages
-        HttpClient client = new HttpClient();
-        HttpResponseMessage response = await client.GetAsync("https://api.cognitive.microsofttranslator.com/languages?api-version=3.0");
-
-        if (response.IsSuccessStatusCode)
-        {
-            string json = await response.Content.ReadAsStringAsync();
-            // Deserialize JSON and extract languages
-            LanguageResponse? languageResponse = JsonSerializer.Deserialize<LanguageResponse>(json);
-            languages = languageResponse.translation;
-            foreach (var entry in languageResponse.translation)
-            {
-                dropdownList.Add(entry.Value.name);
-            }
-            value = " ";/* dropdownList.FirstOrDefault(); */
-
-
-        }
-    }
-
-    class LanguageResponse
-    {
-        public Dictionary<String, Language> translation { get; set; }
-    }
-
-    class Language
-    {
-        public string name { get; set; }
-        public string nativeName { get; set; }
-        public string dir { get; set; }
-    }
-
-    private async void onClickTranslate()
-    {
-        if (value == "")
-        {
-            //ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error Summary", Detail = "Error Detail", Duration = 4000 });
-        }
-        hideLoading = false;
-        String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
-        bool translatedOrNot = await iTranslatorService.Translate(langCode, operationGuid);
-        hideLoading = true;
-
-
-        if (translatedOrNot)
-        {
-            hideSuccess = false;
-            downloadDisable = false;
-            StateHasChanged();
-        }
-        else
-        {
-            hideFail = false;
-            StateHasChanged();
-        }
-    }
-
-    private async void onClickDownload()
-    {
-        hideSuccess = true;
-        await iTranslatorService.DownloadConvertedFiles(operationGuid,iConverterService);
-        if (isFolderForJsonConversionCreated)
-        {
-            iConverterService.DeleteFolderForOperation(operationGuid);
-
-        }
-        // iTranslatorService.CleanInputContainer();
-        // iTranslatorService.CleanOutputContainer();
-    }
-
-    void ShowNotification(NotificationMessage message)
-    {
-        NotificationService.Notify(message);
-        
-        Console.WriteLine($"{message.Severity} notification");
-    }
-}
