@@ -41,16 +41,11 @@
             <RadzenDropDown Change="@(args => OnChange())" @bind-Value=@value Data=@dropdownList Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
         </div>
 
-        @* <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" hidden="@hideLoading " /> *@
-
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
-
                 <RadzenButton Click=@(onClickTranslate) Text="Translate" Icon="translate" ButtonStyle="ButtonStyle.Primary" IsBusy="@isBusy" />
-                <RadzenButton Click=@(onClickReset) Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Primary" />
-
+                <RadzenButton Click=@(onClickReset) Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Primary" Disabled="@resetDisable" />
             </RadzenStack>
-
         </div>
         <div>
             <RadzenAlert AllowClose="false" AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" hidden="@hideSuccess">

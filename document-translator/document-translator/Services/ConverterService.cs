@@ -110,8 +110,8 @@ public class ConverterService : IConverterService
             string keyFolderPath = Path.Combine("Temporary_documents", "keys", folderName);
             string valueFolderPath = Path.Combine("Temporary_documents", "values", folderName);
 
-            Directory.CreateDirectory(keyFolderPath);
-            Directory.CreateDirectory(valueFolderPath);
+             Directory.CreateDirectory(keyFolderPath);
+             Directory.CreateDirectory(valueFolderPath);
 
             _logger.LogInformation($"Folders created for operation {folderName}");
         }

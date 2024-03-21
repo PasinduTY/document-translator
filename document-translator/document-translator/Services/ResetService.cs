@@ -7,7 +7,6 @@ public class ResetService : IResetService
     private IConfiguration _configuration;
     private readonly ILogger<ITranslatorService> _logger;
 
-
     public ResetService(IConfiguration configuration, ILogger<ITranslatorService> logger)
     {
         _configuration = configuration;
@@ -23,7 +22,7 @@ public class ResetService : IResetService
 
             if (Directory.Exists(keyFolderPath))
             {
-                await Task.Run(() => Directory.Delete(keyFolderPath, true));
+                 Directory.Delete(keyFolderPath, true);
                 _logger.LogInformation("Key folder deleted successfully.");
             }
             else
@@ -33,7 +32,7 @@ public class ResetService : IResetService
 
             if (Directory.Exists(valuesFolderPath))
             {
-                await Task.Run(() => Directory.Delete(valuesFolderPath, true));
+               Directory.Delete(valuesFolderPath, true);
                 _logger.LogInformation("Values folder deleted successfully.");
             }
             else
@@ -56,7 +55,7 @@ public class ResetService : IResetService
 
             if (Directory.Exists(translatedDocumentFolder))
             {
-                await Task.Run(() => Directory.Delete(translatedDocumentFolder, true));
+                Directory.Delete(translatedDocumentFolder, true);
                 _logger.LogInformation("Translated document folder deleted successfully.");
             }
             else
@@ -79,7 +78,7 @@ public class ResetService : IResetService
 
             if (Directory.Exists(zipFolderPath))
             {
-                await Task.Run(() => Directory.Delete(zipFolderPath, true));
+                Directory.Delete(zipFolderPath, true);
                 _logger.LogInformation("Zip folder deleted successfully.");
             }
             else
