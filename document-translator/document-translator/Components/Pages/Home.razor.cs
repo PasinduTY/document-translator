@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using Radzen;
+using System;
 using System.Text.Json;
 
 namespace document_translator.Components.Pages
@@ -11,8 +12,6 @@ namespace document_translator.Components.Pages
         Dictionary<String, Language> languages;
         private int uploadedDocumentCount = 0;
         bool hideLoading = true;
-        bool hideSuccess = true;
-        bool hideFail = true;
         bool hideDownload = true;
         string fileType;
         string uploadedDocumentGuid = "";
@@ -22,15 +21,12 @@ namespace document_translator.Components.Pages
         bool hideCount = true;
         bool hideDownCount = true;
         bool isBusy = false;
-        bool hideChooseAlert = true;
-        bool resetDisable=true;
+        bool resetDisable = true;
         int resetState = 0;
         double percentage;
-        private List<IBrowserFile> selectedFiles = new List<IBrowserFile>();
         private async Task LoadFiles(InputFileChangeEventArgs e)
         {
-            selectedFiles = e.GetMultipleFiles().ToList();
-            int selectedFilesCount = selectedFiles.Count;
+            List<IBrowserFile> selectedFiles = e.GetMultipleFiles().ToList();
             hideProgress = false;
             Guid guid = Guid.NewGuid();
             operationGuid = $"{guid}";
@@ -69,7 +65,8 @@ namespace document_translator.Components.Pages
                 if (uploadedOrNot)
                 {
                     uploadedDocumentCount++;
-                    percentage = uploadedDocumentCount * 100 / selectedFilesCount;
+                    ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Upload Successful", Duration = 4000 });
+                    percentage = uploadedDocumentCount * 100 / selectedFiles.Count;
                     if (percentage == 100)
                     {
                         hideProgress = true;
@@ -92,7 +89,6 @@ namespace document_translator.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            SynchronousTranslationService.Translate();
             await base.OnInitializedAsync();
 
             // Call the API to get languages
@@ -136,7 +132,6 @@ namespace document_translator.Components.Pages
             }
             else
             {
-                
                 isBusy = true;
                 String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
                 if (resetDisable == false)
@@ -153,15 +148,13 @@ namespace document_translator.Components.Pages
 
                 if (translatedOrNot)
                 {
-                    //hideSuccess = false;
                     ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Translation Successful", Duration = 4000 });
                     hideDownload = false;
                     StateHasChanged();
                 }
                 else
                 {
-                    //hideFail = false;
-                    ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Translation Unsuccessful", Duration = 4000 });
+                    
                     StateHasChanged();
                     iResetService.DeleteFilesInInputContainerOfOperation(operationGuid);
                     iResetService.DeleteFilesInOutputContainerOfOperation(operationGuid);
@@ -173,22 +166,37 @@ namespace document_translator.Components.Pages
             }
         }
 
-        private async void onClickDownload()
+        private async Task onClickReset()
         {
-            //hideSuccess = true
-            hideDownCount = false;
-            await iTranslatorService.DownloadConvertedFiles(operationGuid, iConverterService);
-            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Download Successful", Duration = 4000 });
-
-            if (isFolderForJsonConversionCreated)
+            switch (resetState)
             {
-                iConverterService.DeleteFolderForOperation(operationGuid);
+                case 1:
+                    iResetService.DeleteFilesInInputContainerOfOperation(operationGuid);
+                    break;
+                case 2:
+                    iResetService.DeleteFilesInInputContainerOfOperation(operationGuid);
+                    iResetService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+                    if (isFolderForJsonConversionCreated)
+                    {
+                        await iResetService.DeleteKeyAndValueFolders(operationGuid);
+                    }
+                    break;
+            }
+        }
 
         private async Task onClickDownload()
         {
-            DownloadAsZipFile();
-          //  CleanTheFiles();
-           
+            await DownloadAsZipFile();
+            hideDownCount = false;
+            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Download Complete", Duration = 4000 });
+            await CleanTheFiles();
+        }
+
+        void ShowNotification(NotificationMessage message)
+        {
+            NotificationService.Notify(message);
+
+            Console.WriteLine($"{message.Severity} notification");
         }
 
         private async Task DownloadAsZipFile()

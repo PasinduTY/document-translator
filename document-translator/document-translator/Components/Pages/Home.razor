@@ -7,10 +7,11 @@
 @inject ITranslatorService iTranslatorService
 @inject IConverterService iConverterService
 @inject NotificationService NotificationService
-@inject ISynchronousTranslationService SynchronousTranslationService
+@inject IResetService iResetService
+@inject IJSRuntime JSRuntime
+
 
 <PageTitle>Home</PageTitle>
-
 
 <div Class="rz-p-0 rz-p-md-12">
 
@@ -37,7 +38,7 @@
 
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
-                <RadzenButton Click=@(onClickTranslate) Text="Translate" Icon="translate" ButtonStyle="ButtonStyle.Primary" IsBusy="@isBusy" />
+                <RadzenButton Click=@(onClickTranslate) Text="Translate" Icon="translate" ButtonStyle="ButtonStyle.Primary" IsBusy="@isBusy" BusyText="Translating" />
                 <RadzenButton Click=@(onClickReset) Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Primary" Disabled="@resetDisable" />
             </RadzenStack>
         </div>
@@ -66,4 +67,3 @@
         </div>
     </RadzenCard>
 </div>
-

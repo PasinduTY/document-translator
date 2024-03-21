@@ -12,6 +12,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<ITranslatorService,TranslatorService >();
 builder.Services.AddScoped<IConverterService, ConverterService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<IResetService, ResetService>();
 builder.Services.AddScoped<ISynchronousTranslationService,SynchronousTranslationService>();
 var app = builder.Build();
 
