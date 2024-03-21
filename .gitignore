@@ -3,4 +3,6 @@ bin/
 obj/
 .vs/
 .idea/
-
+document-translator/document-translator/log.txt
+document-translator/document-translator/Temporary_documents
+document-translator/document-translator/wwwroot/translated_files_as_zip

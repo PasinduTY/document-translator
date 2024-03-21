@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using Radzen;
 using System.Text.Json;
 
@@ -22,10 +23,11 @@ namespace document_translator.Components.Pages
         bool hideDownCount = true;
         bool isBusy = false;
         bool hideChooseAlert = true;
+        bool resetDisable=true;
+        int resetState = 0;
         double percentage;
         private List<IBrowserFile> selectedFiles = new List<IBrowserFile>();
-
-        private async void LoadFiles(InputFileChangeEventArgs e)
+        private async Task LoadFiles(InputFileChangeEventArgs e)
         {
             selectedFiles = e.GetMultipleFiles().ToList();
             int selectedFilesCount = selectedFiles.Count;
@@ -39,7 +41,10 @@ namespace document_translator.Components.Pages
                 bool uploadedOrNot;
                 string contentType = file.ContentType;
                 fileType = contentType.Split('/')[1];
-
+                if (resetDisable == false)
+                {
+                    resetDisable = true;
+                }
                 if (fileType == "json")
                 {
                     if (isFolderForJsonConversionCreated != true)
@@ -60,7 +65,7 @@ namespace document_translator.Components.Pages
                     string fileName = file.Name;
                     blobName = $"{operationGuid}/{fileName}";
                 }
-                uploadedOrNot = await iTranslatorService.UploadDocuments(memoryStreamOfFile, blobName);
+                uploadedOrNot = await iTranslatorService.UploadDocumentsAsync(memoryStreamOfFile, blobName);
                 if (uploadedOrNot)
                 {
                     uploadedDocumentCount++;
@@ -72,6 +77,11 @@ namespace document_translator.Components.Pages
                     }
                     StateHasChanged();
                 }
+            }
+            if (resetDisable == true)
+            {
+                resetDisable = false;
+                resetState = 1;
             }
         }
         void OnChange()
@@ -117,7 +127,7 @@ namespace document_translator.Components.Pages
             public string dir { get; set; }
         }
 
-        private async void onClickTranslate()
+        private async Task onClickTranslate()
         {
             if (String.IsNullOrWhiteSpace(value))
             {
@@ -126,12 +136,20 @@ namespace document_translator.Components.Pages
             }
             else
             {
+                
                 isBusy = true;
                 String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
-                bool translatedOrNot = await iTranslatorService.Translate(langCode, operationGuid);
+                if (resetDisable == false)
+                {
+                    resetDisable = true;
+                }
+                bool translatedOrNot = await iTranslatorService.TranslateAsync(langCode, operationGuid);
                 isBusy = false;
-
-
+                if (resetDisable == true)
+                {
+                    resetDisable = false;
+                    resetState = 2;
+                }
 
                 if (translatedOrNot)
                 {
@@ -145,6 +163,12 @@ namespace document_translator.Components.Pages
                     //hideFail = false;
                     ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Translation Unsuccessful", Duration = 4000 });
                     StateHasChanged();
+                    iResetService.DeleteFilesInInputContainerOfOperation(operationGuid);
+                    iResetService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+                    if (isFolderForJsonConversionCreated)
+                    {
+                        await iResetService.DeleteKeyAndValueFolders(operationGuid);
+                    }
                 }
             }
         }
@@ -160,20 +184,33 @@ namespace document_translator.Components.Pages
             {
                 iConverterService.DeleteFolderForOperation(operationGuid);
 
-            }
-            
-            // iTranslatorService.CleanInputContainer();
-            // iTranslatorService.CleanOutputContainer();
-        }
-        private async void onClickReset()
-        { 
-        
-        }
-            void ShowNotification(NotificationMessage message)
+        private async Task onClickDownload()
         {
-            NotificationService.Notify(message);
-
-            Console.WriteLine($"{message.Severity} notification");
+            DownloadAsZipFile();
+          //  CleanTheFiles();
+           
         }
+
+        private async Task DownloadAsZipFile()
+        {
+            await iTranslatorService.DownloadConvertedFiles(operationGuid);
+            string fileName = "Translated_Files.zip";
+            var fileURL = $"/translated_files_as_zip/{operationGuid}/Translated_Files.zip";
+            await JSRuntime.InvokeVoidAsync("triggerFileDownload", fileName, fileURL);
+        }
+
+        private async Task CleanTheFiles()
+        {
+            await iResetService.DeleteZipFolderInRoot(operationGuid);
+            await iResetService.DeleteTranslatedDocumentFolder(operationGuid);
+            await iResetService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+            await iResetService.DeleteFilesInInputContainerOfOperation(operationGuid);
+
+            if (isFolderForJsonConversionCreated)
+            {
+                await iResetService.DeleteKeyAndValueFolders(operationGuid);
+            }
+        }
+
     }
 }

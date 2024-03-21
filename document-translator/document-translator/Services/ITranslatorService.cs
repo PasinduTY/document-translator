@@ -4,18 +4,20 @@ using Microsoft.AspNetCore.Components.Forms;
 
 public interface ITranslatorService
 {
-    Task<bool> Translate(string languageCode,string operationGuid);
+    Task<bool> TranslateAsync(string languageCode, string operationGuid);
     Task CleanInputContainer();
 
     Task CleanOutputContainer();
 
-    Task DownloadConvertedFiles(string operationGuid, IConverterService iconverterService);
+    Task DownloadConvertedFiles(string operationGuid);
 
-  //  Task<bool> Upload(IBrowserFile file, string fileName);
+    //  Task<bool> Upload(IBrowserFile file, string fileName);
 
-  //  Task<string> Upload(Workbook file);
+    //  Task<string> Upload(Workbook file);
 
-    Task  <bool> UploadDocuments(MemoryStream memoryStreamOfDocument, string blobName);
+    Task<bool> UploadDocumentsAsync(MemoryStream memoryStreamOfDocument, string blobName);
+
+    //  Task CreateZipFromTranslatedDocumentsAsync(string operationGuid);
 
 
 }

@@ -8,8 +8,6 @@ public interface IConverterService
     Task<string> CombineExcelToJson(MemoryStream memoryStreamOfTranslatedExcelFile, string operationGuid, string guidOfValueExcel);
     Task CreateFolderForOperation(string folderName);
 
-    Task DeleteFolderForOperation(string folderName);
-
-    Task<MemoryStream> GetTheMemoryStreamFromValueExcel(string operationGuid,string uploadedDocumentGuid);
+    Task<MemoryStream> GetTheMemoryStreamFromValueExcel(string operationGuid, string uploadedDocumentGuid);
 }
 
