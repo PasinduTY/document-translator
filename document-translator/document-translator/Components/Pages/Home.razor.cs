@@ -82,6 +82,7 @@ namespace document_translator.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            SynchronousTranslationService.Translate();
             await base.OnInitializedAsync();
 
             // Call the API to get languages
@@ -120,8 +121,8 @@ namespace document_translator.Components.Pages
         {
             if (String.IsNullOrWhiteSpace(value))
             {
-                hideChooseAlert = false;
-                //ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error Summary", Detail = "Error Detail", Duration = 4000 });
+                //hideChooseAlert = false;
+                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Please select a language", Duration = 4000 });
             }
             else
             {
@@ -134,13 +135,15 @@ namespace document_translator.Components.Pages
 
                 if (translatedOrNot)
                 {
-                    hideSuccess = false;
+                    //hideSuccess = false;
+                    ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Translation Successful", Duration = 4000 });
                     hideDownload = false;
                     StateHasChanged();
                 }
                 else
                 {
-                    hideFail = false;
+                    //hideFail = false;
+                    ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Translation Unsuccessful", Duration = 4000 });
                     StateHasChanged();
                 }
             }
@@ -151,6 +154,8 @@ namespace document_translator.Components.Pages
             //hideSuccess = true
             hideDownCount = false;
             await iTranslatorService.DownloadConvertedFiles(operationGuid, iConverterService);
+            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Download Successful", Duration = 4000 });
+
             if (isFolderForJsonConversionCreated)
             {
                 iConverterService.DeleteFolderForOperation(operationGuid);

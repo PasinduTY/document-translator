@@ -54,11 +54,11 @@ h1:focus {
     display: inline-block;
     position: relative;
     overflow: hidden;
-    border: 2px solid #007bff;
+    border: 2px solid #4340d2;
     border-radius: 5px;
     padding: 7px 20px;
     background-color: #ffffff;
-    color: #007bff;
+    color: #4340d2;
     cursor: pointer;
     text-align: center;
 }
@@ -74,6 +74,6 @@ h1:focus {
     }
 
     .custom-input-file:hover {
-        background-color: #007bff;
+        background-color: #4340d2;
         color: #ffffff;
     }
