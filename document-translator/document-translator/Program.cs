@@ -10,10 +10,19 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<ITranslatorService,TranslatorService >();
-builder.Services.AddScoped<IConverterService, ConverterService>();
 builder.Services.AddScoped<NotificationService>();
-builder.Services.AddScoped<IResetService, ResetService>();
 builder.Services.AddScoped<ISynchronousTranslationService,SynchronousTranslationService>();
+
+// Configure Serilog for file logging
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File("log.txt") // Specify the log file name
+    .CreateLogger();
+
+// Set up Serilog as the logging provider
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
