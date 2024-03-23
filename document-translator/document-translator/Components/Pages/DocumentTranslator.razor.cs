@@ -98,7 +98,11 @@ namespace document_translator.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            
+            //iSynchronousTranslationService.TranslateDocument("C:/Users/pasindu.si/Downloads/1.txt", "D:/Syn/output.txt", "hi");
+            //iTextTranslateService.TextTranslator("I would really like to drive your car around the block a few times.", "fr");
             await base.OnInitializedAsync();
+            
 
             // Call the API to get languages
             HttpClient client = new HttpClient();
