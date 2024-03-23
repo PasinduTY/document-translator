@@ -7,9 +7,6 @@
 @inject ITranslatorService iTranslatorService
 @inject IConverterService iConverterService
 @inject NotificationService NotificationService
-@inject ISynchronousTranslationService iSynchronousTranslationService
-@inject ITextTranslateService iTextTranslateService
-@inject IResetService iResetService
 @inject IJSRuntime JSRuntime
 
 
@@ -19,53 +16,6 @@
 
     <RadzenCard Class="rz-my-12 rz-mx-auto" Style="max-width: 1000px">
 
-        <div class="rz-p-sm-12 rz-text-align-center">
-
-            <span class="material-symbols-outlined" style="font-size:xx-large">
-                cloud_upload
-            </span>
-            <div class="custom-input-file">
-                <span>Upload File</span>
-                <InputFile OnChange="LoadFiles" multiple />
-            </div>
-            <RadzenText TextStyle="TextStyle.Subtitle2" hidden="@hideCount">@uploadedDocumentCount Documents Uploaded</RadzenText>
-
-        </div>
-        <div><RadzenProgressBar @bind-Value="@percentage" hidden="@hideProgress" /></div>
-
-        <div class="rz-p-sm-10 rz-text-align-center">
-            <RadzenLabel Text="Target Language" Component="DropDownBindValue" Style="margin-right: 8px; vertical-align: middle;" />
-            <RadzenDropDown Change="@(args => OnChange())" @bind-Value=@value Data=@dropdownList Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
-        </div>
-
-        <div class="d-flex justify-content-center">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
-                <RadzenButton Click=@(onClickTranslate) Text="Translate" Icon="translate" ButtonStyle="ButtonStyle.Primary" IsBusy="@isBusy" BusyText="Translating" />
-                <RadzenButton Click=@(onClickReset) Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Primary" Disabled="@resetDisable" />
-            </RadzenStack>
-        </div>
-        @* <div>
-            <RadzenAlert AllowClose="false" AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" hidden="@hideSuccess">
-                Translation Successful
-            </RadzenAlert>
-            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" hidden="@hideFail">
-                Translation Unsuccessful
-            </RadzenAlert>
-            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" hidden="@hideChooseAlert">
-                Please select a Language
-            </RadzenAlert>
-        </div> *@
-
-        <div class="d-flex justify-content-center">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
-
-                <RadzenButton Click=@(onClickDownload) Text="Download" Icon="download" ButtonStyle="ButtonStyle.Primary" style="margin-top:80px" hidden="@hideDownload" />
-
-            </RadzenStack>
-
-        </div>
-        <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <RadzenText TextStyle="TextStyle.Subtitle2" hidden="@hideDownCount">@uploadedDocumentCount Documents Downloaded</RadzenText>
-        </div>
+    
     </RadzenCard>
 </div>
