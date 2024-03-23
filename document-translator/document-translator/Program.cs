@@ -14,6 +14,7 @@ builder.Services.AddScoped<IConverterService, ConverterService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<IResetService, ResetService>();
 builder.Services.AddScoped<ISynchronousTranslationService,SynchronousTranslationService>();
+builder.Services.AddScoped<ITextTranslateService,TextTranslateSerrvice>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

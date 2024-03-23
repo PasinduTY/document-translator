@@ -1,6 +1,6 @@
 ﻿
     public interface ISynchronousTranslationService
 {
-    public void Translate();
+     Task TranslateDocument(string inputFilePath, string outputFilePath, String targetLanguage);
 }
 

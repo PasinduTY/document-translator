@@ -1,24 +1,50 @@
 ﻿
-    public class SynchronousTranslationService : ISynchronousTranslationService
+public class SynchronousTranslationService : ISynchronousTranslationService
 {
-    public void Translate()
+    
+    private static readonly string endpoint = "https://abc-ai-translator.cognitiveservices.azure.com/";
+    private static readonly string subscriptionKey = "e40a0130bc4b4c34bb2fd3dd16fe2752";
+    //private static readonly string sourceLanguage = "en";
+    //private static readonly string targetLanguage = "hi";
+    private static readonly string apiVersion = "2023-11-01-preview";
+
+    public async Task TranslateDocument(string inputFilePath, string outputFilePath, String targetLanguage)
     {
-        //var cl = new HttpClient();
-        //cl.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", "d7459b863ba14c74a1d0ae0cf699da63");
+        string url = $"{endpoint}/translator/document:translate";
 
-        
-        //var content = new Dictionary<string, string> {
-        
-        //    {"document", "C:/Users/pasindu.si/Downloads/1.txt" },
-        //    { "type","text/plain" }
-            
-        //};
-        //var res = cl.PostAsync("https://testcreative.cognitiveservices.azure.com/translator/document:translate?sourceLanguage=en&targetLanguage=hi&api-version=2023-11-01-preview", new FormUrlEncodedContent(content));
+        using (HttpClient client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
 
-        //Console.WriteLine(res.Result.Content.ReadAsStringAsync().Result);
+            var content = new MultipartFormDataContent();
+            var fileStream = new FileStream(inputFilePath, FileMode.Open);
 
+            content.Add(new StreamContent(fileStream), "document", Path.GetFileName(inputFilePath));
+
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+            //queryString["sourceLanguage"] = sourceLanguage;
+            queryString["targetLanguage"] = targetLanguage;
+            queryString["api-version"] = apiVersion;
+
+            url += "?" + queryString.ToString();
+
+            var response = await client.PostAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                using (var outputDocument = new FileStream(outputFilePath, FileMode.Create))
+                {
+                    await response.Content.CopyToAsync(outputDocument);
+                    Console.WriteLine("Synchronous Successful");
+                }
+            }
+            else
+            {  
+                Console.WriteLine($"Error: {response.ReasonPhrase}");
+            }
+        }
     }
 
-   
+
 }
 
