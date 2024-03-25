@@ -2,8 +2,8 @@
 public class SynchronousTranslationService : ISynchronousTranslationService
 {
     
-    private static readonly string endpoint = "https://testcreative.cognitiveservices.azure.com/";
-    private static readonly string subscriptionKey = "d7459b863ba14c74a1d0ae0cf699da63";
+    private static readonly string endpoint = "https://abc-ai-translator.cognitiveservices.azure.com/";
+    private static readonly string subscriptionKey = "e40a0130bc4b4c34bb2fd3dd16fe2752";
     //private static readonly string sourceLanguage = "en";
     //private static readonly string targetLanguage = "hi";
     private static readonly string apiVersion = "2023-11-01-preview";
@@ -34,13 +34,17 @@ public class SynchronousTranslationService : ISynchronousTranslationService
             {
                 using (var outputDocument = new FileStream(outputFilePath, FileMode.Create))
                 {
+                    //Console.WriteLine(response);
+                    //await response.Content.ReadAsByteArrayAsync();
                     await response.Content.CopyToAsync(outputDocument);
                     Console.WriteLine("Synchronous Successful");
                 }
             }
             else
-            {  
-                Console.WriteLine($"Error: {response.ReasonPhrase}");
+            {
+                string errorMessage = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {response.ReasonPhrase}. Details: {errorMessage}");
+                
             }
         }
     }

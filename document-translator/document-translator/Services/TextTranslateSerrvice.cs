@@ -10,7 +10,7 @@ public class TextTranslateSerrvice : ITextTranslateService
     // required if you're using a multi-service or regional (not global) resource. It can be found in the Azure portal on the Keys and Endpoint page.
     private static readonly string location = "centralindia";
 
-    public async Task TextTranslator(string textToTranslate, string targetLanguage)
+    public async Task<string> TextTranslator(string textToTranslate, string targetLanguage)
     {
         // Input and output languages are defined as parameters.
         string route = $"/translate?api-version=3.0&to={targetLanguage}";
@@ -40,9 +40,12 @@ public class TextTranslateSerrvice : ITextTranslateService
             {
                 foreach (var t in translation.translations)
                 {
-                    Console.WriteLine(t.text);
+                    return(t.text);
                 }
             }
+
+            return "Translation not available";
+            
         }
     }
 

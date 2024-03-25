@@ -1,6 +1,6 @@
 ﻿
     public interface ITextTranslateService
 {
-    Task TextTranslator(string textToTranslate, string targetLanguage);
+    Task<string> TextTranslator(string textToTranslate, string targetLanguage);
 }
 

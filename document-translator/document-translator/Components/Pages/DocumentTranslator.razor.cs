@@ -100,7 +100,8 @@ namespace document_translator.Components.Pages
         {
             
             //iSynchronousTranslationService.TranslateDocument("C:/Users/pasindu.si/Downloads/1.txt", "D:/Syn/output.txt", "hi");
-            //iTextTranslateService.TextTranslator("I would really like to drive your car around the block a few times.", "fr");
+            //String translatedText = await iTextTranslateService.TextTranslator("I would really like to drive your car around the block a few times.", "fr");
+           // Console.WriteLine(translatedText);
             await base.OnInitializedAsync();
             
 
