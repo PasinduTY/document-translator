@@ -1,6 +1,9 @@
+using Aspose.Cells;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using Radzen;
+using Radzen.Blazor;
+using Radzen.Blazor.Rendering;
 using System.Text.Json;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -11,21 +14,14 @@ namespace document_translator.Components.Pages
         string value;
         Dictionary<String, Language> languages;
         int uploadedDocumentCount = 0;
-       // bool hideDownload = true;
         string operationGuid;
         bool jsonTranslationInitialized = false;
         bool isUploading = false;
         bool isUploaded = false;
         bool isTranslating = false;
         bool isTranslated=false;
-        //     bool hideProgress = true;
-        //bool hideCount = true;
         bool isDownloaded = false;
-       // bool isBusy = false; //
-       // bool resetDisable = true;
-       // int resetState = 0;
-       // bool uploadedOrNot;
-        double percentage; //
+        double percentage;
         private async Task LoadFiles(InputFileChangeEventArgs e)
         {
             List<IBrowserFile> selectedFiles = e.GetMultipleFiles().ToList();
@@ -33,46 +29,49 @@ namespace document_translator.Components.Pages
             operationGuid = Guid.NewGuid().ToString();
             foreach (var file in e.GetMultipleFiles())
             {
-                string blobName;
-                MemoryStream memoryStreamOfFile;
+                string blobName="";
+                MemoryStream memoryStreamOfFile=null;
                 string contentType = file.ContentType;
                 Console.Write(contentType);
                 if (file.ContentType == "application/json")
                 {
-                    Console.Write(contentType);
-                    if (jsonTranslationInitialized != true)
-                    {
-                        iTranslatorService.CreateFolderForOperation(operationGuid);
-                        jsonTranslationInitialized = true;
-                    }
-                    string uploadedDocumentGuid = await iTranslatorService.ConvertToExcelAsync(file, operationGuid);
-                    memoryStreamOfFile = await iTranslatorService.GetTheMemoryStreamFromValueExcel(operationGuid, uploadedDocumentGuid);
-                    blobName = $"{operationGuid}/json/{uploadedDocumentGuid}.xlsx";
+                        try
+                        {
+                        if (jsonTranslationInitialized != true)
+                        {
+                            iTranslatorService.CreateFolderForOperation(operationGuid);
+                            jsonTranslationInitialized = true;
+                        }
+                            string uploadedDocumentGuid = await iTranslatorService.ConvertToExcelAsync(file, operationGuid);
+                            memoryStreamOfFile = await iTranslatorService.GetTheMemoryStreamFromValueExcel(operationGuid, uploadedDocumentGuid);
+                            blobName = $"{operationGuid}/json/{uploadedDocumentGuid}.xlsx";
+                        }
+                        catch (Exception ex) {
+                            //fill
+                        }
                 }
                 else
                 {
-                    var stream = file.OpenReadStream();
-                    memoryStreamOfFile = new MemoryStream();
-                    await stream.CopyToAsync(memoryStreamOfFile);
-                    memoryStreamOfFile.Position = 0;
-                    string fileName = file.Name;
-                    blobName = $"{operationGuid}/{fileName}";
+                    try
+                    {
+                        var stream = file.OpenReadStream();
+                        memoryStreamOfFile = new MemoryStream();
+                        await stream.CopyToAsync(memoryStreamOfFile);
+                        memoryStreamOfFile.Position = 0;
+                        string fileName = file.Name;
+                        blobName = $"{operationGuid}/{fileName}";
+                    }catch (Exception ex) {
+                        //fill
+                    }
+
                 }
                 bool isUploaded = await iTranslatorService.UploadDocumentsAsync(memoryStreamOfFile, blobName);
                 if (isUploaded)
                 {
                     handleUplodedPerecetage(selectedFiles.Count);
                 }
-                else
-                {
-                    ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Upload is not Successful. Try Again", Duration = 4000 });
-
-                }
             }
-           // resetState = 1;
-        }
-        void OnChange()
-        {
+            handleUploadCompletion(selectedFiles.Count, uploadedDocumentCount);
         }
 
         void ShowNotification(NotificationMessage message)
@@ -85,13 +84,27 @@ namespace document_translator.Components.Pages
         {
             uploadedDocumentCount++;
             percentage = uploadedDocumentCount * 100 / fileCount;
-            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Upload Successful", Duration = 4000 });
-           // if (percentage == 100)
-           // {
-                isUploading = false;
-                isUploaded = true;
-               // hideCount = false;
-            //}
+            StateHasChanged();
+        }
+
+        void handleUploadCompletion(int fileCount, int uploadedCount)
+        {
+            isUploading = false;
+            isUploaded = true;
+            percentage = 0;
+            if (uploadedCount == fileCount)
+            {
+                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Uploaded Successfully", Duration = 4000 });
+            }
+            else if (uploadedCount == 0)
+            {
+                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Uploading unsuccessfull. Please Try Again", Duration = 4000 });
+                resetTranslation();
+            }
+            else
+            {
+                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = $"Only {uploadedDocumentCount} are uploaded", Duration = 4000 });
+            }
         }
 
         List<string> dropdownList = new List<string>();
@@ -119,7 +132,7 @@ namespace document_translator.Components.Pages
                 {
                     dropdownList.Add(entry.Value.name);
                 }
-                value = " ";/* dropdownList.FirstOrDefault(); */
+                value = " ";
             }
         }
 
@@ -135,6 +148,14 @@ namespace document_translator.Components.Pages
             public string dir { get; set; }
         }
 
+        void OnChange()
+        {
+            if (isTranslated)
+            {
+                iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+                isTranslated = false;
+            }
+        }
         private async Task onClickTranslate()
         {
             if (String.IsNullOrWhiteSpace(value))
@@ -145,77 +166,78 @@ namespace document_translator.Components.Pages
             {
                 isTranslating = true;
                 String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
-              /*  if (!resetDisable)
+                bool translatedOrNot =  await iTranslatorService.TranslateAsync(langCode, operationGuid);
+               /*  if (translatedFileCount > 0)
                 {
-                    resetDisable = true;
-               }*/
-                bool translatedOrNot = await iTranslatorService.TranslateAsync(langCode, operationGuid);
-                isTranslating= false;
-             /*   if (resetDisable)
-                {
-                    resetDisable = false;
-                    resetState = 2;
+                     translatedOrNot=true;
                 }*/
-
+               // Console.WriteLine(translatedFileCount.ToString());
+                isTranslating = false;
                 if (translatedOrNot)
                 {
                     ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Translation Successful", Duration = 4000 });
-                    //hideDownload = false;
                     isTranslated = true;
-                    //StateHasChanged();
                 }
                 else
                 {
-                    //StateHasChanged();
                     ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Translation is not Successful. Try Again", Duration = 4000 });
+                    iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+                }
+            }
+        }
+
+        private async Task onClickReset()
+        {   
+         
+            if (!isUploaded&& !isTranslated)
+            {
+                //ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "You haven't start the translation to cancel", Duration = 4000 });
+
+            }
+
+            else if(isUploaded && !isTranslated)
+            {
+                bool? result = await dialogService.Confirm("Are you sure?", "Cancel Translation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+                if (result==true) {
+                    iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
+                    if (jsonTranslationInitialized)
+                    {
+                        await iTranslatorService.DeleteKeyAndValueFolders(operationGuid);
+                    }
+                    resetTranslation();
+                }
+
+            }
+            else if (isUploaded && isTranslated)
+            {
+                bool? result = await dialogService.Confirm("Are you sure?", "Cancel Translation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+                if (result == true)
+                {
                     iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
                     iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
                     if (jsonTranslationInitialized)
                     {
                         await iTranslatorService.DeleteKeyAndValueFolders(operationGuid);
                     }
+                    resetTranslation();
                 }
             }
-        }
-
-        private async Task onClickReset()
-        {
-            if(!isUploaded&& !isTranslated)
-            {
-                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "You haven't start the translation to cancel", Duration = 4000 });
-            }
-            else if(isUploaded && !isTranslated)
-            {
-                uploadedDocumentCount = 0;
-                iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
-                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Successfully canceled operation. Upload documents again", Duration = 4000 });
-
-            }
-            else if (isUploaded && isTranslated)
-            {
-                uploadedDocumentCount = 0;
-                iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
-                iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
-                if (jsonTranslationInitialized)
-                {
-                    await iTranslatorService.DeleteKeyAndValueFolders(operationGuid);
-                }
-                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Successfully canceled operation. Upload documents again", Duration = 4000 });
-            }
-            isUploaded = false;
-            isTranslated = false;
         }
 
         private async Task onClickDownload()
         {
-            await DownloadAsZipFile();
-            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Download Complete", Duration = 4000 });
-            isTranslated = false;
-            isUploaded = false;
-            isTranslating = false;
-            isUploading = false;
-            uploadedDocumentCount= 0;
-            //await CleanTheFiles();
+            try
+            {
+                await DownloadAsZipFile();
+                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Download Complete", Duration = 4000 });
+                resetTranslation();
+                await Task.Delay(3000);
+                await CleanTheFiles();
+            }
+            catch (Exception ex)
+            {
+                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error with downloading translated documents. Please Download again", Duration = 4000 });
+            }
         }
 
         private async Task DownloadAsZipFile()
@@ -239,5 +261,15 @@ namespace document_translator.Components.Pages
             }
         }
 
+        private void resetTranslation()
+        {
+             uploadedDocumentCount = 0;
+             jsonTranslationInitialized = false;
+             isUploading = false;
+             isUploaded = false;
+             isTranslating = false;
+             isTranslated = false;
+             isDownloaded = false;
+        }
     }
 }

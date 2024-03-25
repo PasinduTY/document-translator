@@ -8,13 +8,20 @@ public class SynchronousTranslationService : ISynchronousTranslationService
     //private static readonly string targetLanguage = "hi";
     private static readonly string apiVersion = "2023-11-01-preview";
 
-    public async Task TranslateDocument(string inputFilePath, string outputFilePath, String targetLanguage)
+    public SynchronousTranslationService(IConfiguration configuration, ILogger<ISynchronousTranslationService> logger)
     {
-        string url = $"{endpoint}/translator/document:translate";
+        _configuration = configuration;
+        _logger = logger;
+        _endpoint = _configuration.GetConnectionString("Translator.Endpoint");
+        _key = _configuration.GetConnectionString("Translator.Key");
+    }
+    public async Task TranslateDocument(string inputFilePath, string outputFilePath, string targetLanguage)
+    {
+        string url = $"{_endpoint}/translator/document:translate";
 
         using (HttpClient client = new HttpClient())
         {
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _key);
 
             var content = new MultipartFormDataContent();
             var fileStream = new FileStream(inputFilePath, FileMode.Open);
@@ -37,7 +44,7 @@ public class SynchronousTranslationService : ISynchronousTranslationService
                     //Console.WriteLine(response);
                     //await response.Content.ReadAsByteArrayAsync();
                     await response.Content.CopyToAsync(outputDocument);
-                    Console.WriteLine("Synchronous Successful");
+                    _logger.LogInformation("Translation successful.");
                 }
             }
             else

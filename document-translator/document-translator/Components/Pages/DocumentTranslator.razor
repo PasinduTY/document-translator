@@ -6,6 +6,7 @@
 @inherits OwningComponentBase
 @inject ITranslatorService iTranslatorService
 @inject NotificationService notificationService
+@inject DialogService dialogService
 @inject IJSRuntime JSRuntime
 @inject ISynchronousTranslationService iSynchronousTranslationService
 @inject ITextTranslateService iTextTranslateService
@@ -37,11 +38,10 @@
 
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
-                <RadzenButton Click=@(onClickTranslate) Text="Translate" Icon="translate" ButtonStyle="ButtonStyle.Primary" IsBusy="@isTranslating" Disabled="(!isUploaded)" />
+                <RadzenButton Click=@(onClickTranslate) Text="Translate" Icon="translate" ButtonStyle="ButtonStyle.Primary" IsBusy="@isTranslating" BusyText="Translating ..." Disabled="(!isUploaded)" />
                 <RadzenButton Click=@(onClickReset) Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Primary" Disabled="@(isUploading||isTranslating)" />
             </RadzenStack>
         </div>
-
 
         <div class="d-flex justify-content-center">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
@@ -51,6 +51,7 @@
         <div style="display: flex; justify-content: center; margin-top: 20px;">
             <RadzenText TextStyle="TextStyle.Subtitle2" hidden="@(!isDownloaded)">@uploadedDocumentCount Documents Downloaded</RadzenText>
         </div>
+
     </RadzenCard>
 </div>
 
