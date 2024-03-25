@@ -163,8 +163,13 @@ namespace document_translator.Components.Pages
             {
                 isTranslating = true;
                 String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
-                bool translatedOrNot = await iTranslatorService.TranslateAsync(langCode, operationGuid);
-                isTranslating= false;
+                bool translatedOrNot =  await iTranslatorService.TranslateAsync(langCode, operationGuid);
+               /*  if (translatedFileCount > 0)
+                {
+                     translatedOrNot=true;
+                }*/
+               // Console.WriteLine(translatedFileCount.ToString());
+                isTranslating = false;
                 if (translatedOrNot)
                 {
                     ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Translation Successful", Duration = 4000 });
@@ -179,30 +184,41 @@ namespace document_translator.Components.Pages
         }
 
         private async Task onClickReset()
-        {
-           // var  result = await dialogService.Confirm("Are you sure?", "Cancel Translation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
-
+        {   
+         
             if (!isUploaded&& !isTranslated)
             {
-                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "You haven't start the translation to cancel", Duration = 4000 });
+                //ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "You haven't start the translation to cancel", Duration = 4000 });
 
             }
 
             else if(isUploaded && !isTranslated)
             {
-                dialogService.Confirm("Are you sure?", "MyTitle", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
-                iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
+                bool? result = await dialogService.Confirm("Are you sure?", "Cancel Translation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+                if (result==true) {
+                    iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
+                    if (jsonTranslationInitialized)
+                    {
+                        await iTranslatorService.DeleteKeyAndValueFolders(operationGuid);
+                    }
+                    resetTranslation();
+                }
 
             }
             else if (isUploaded && isTranslated)
             {
-                iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
-                iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
-                if (jsonTranslationInitialized)
+                bool? result = await dialogService.Confirm("Are you sure?", "Cancel Translation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+                if (result == true)
                 {
-                    await iTranslatorService.DeleteKeyAndValueFolders(operationGuid);
-                }            }
-            resetTranslation();
+                    iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
+                    iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+                    if (jsonTranslationInitialized)
+                    {
+                        await iTranslatorService.DeleteKeyAndValueFolders(operationGuid);
+                    }
+                    resetTranslation();
+                }
+            }
         }
 
         private async Task onClickDownload()
