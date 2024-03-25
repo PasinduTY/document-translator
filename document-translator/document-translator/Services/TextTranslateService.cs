@@ -1,14 +1,21 @@
 ﻿using System.Text;
 using System.Transactions;
 using Newtonsoft.Json;
-public class TextTranslateSerrvice : ITextTranslateService
+public class TextTranslateService : ITextTranslateService
 {
-    private static readonly string key = "d7459b863ba14c74a1d0ae0cf699da63";
-    private static readonly string endpoint = "https://api.cognitive.microsofttranslator.com";
-
-    // location, also known as region.
-    // required if you're using a multi-service or regional (not global) resource. It can be found in the Azure portal on the Keys and Endpoint page.
+    private readonly ILogger _logger;
+    private IConfiguration _configuration;
+    private readonly string _endpoint;
+    private readonly string _key;
     private static readonly string location = "centralindia";
+
+    public TextTranslateService(IConfiguration configuration, ILogger<ISynchronousTranslationService> logger)
+    {
+        _configuration = configuration;
+        _logger = logger;
+        _endpoint = _configuration.GetConnectionString("Translator.Endpoint");
+        _key = _configuration.GetConnectionString("Translator.Key");
+    }
 
     public async Task TextTranslator(string textToTranslate, string targetLanguage)
     {
@@ -23,9 +30,9 @@ public class TextTranslateSerrvice : ITextTranslateService
         {
             // Build the request.
             request.Method = HttpMethod.Post;
-            request.RequestUri = new Uri(endpoint + route);
+            request.RequestUri = new Uri(_endpoint + route);
             request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
-            request.Headers.Add("Ocp-Apim-Subscription-Key", key);
+            request.Headers.Add("Ocp-Apim-Subscription-Key", _key);
             // location required if you're using a multi-service or regional (not global) resource.
             request.Headers.Add("Ocp-Apim-Subscription-Region", location);
 

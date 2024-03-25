@@ -37,6 +37,7 @@ public class TranslatorService : ITranslatorService
         _logger = logger;
     }
 
+
     public async Task<string> ConvertToExcelAsync(IBrowserFile file, string operationGuid)
     {
         try
@@ -131,13 +132,12 @@ public class TranslatorService : ITranslatorService
     {
         try
         {
-            string keyFolderPath = Path.Combine("Temporary_documents", "keys", folderName);
-            string valueFolderPath = Path.Combine("Temporary_documents", "values", folderName);
+              string keyFolderPath = Path.Combine("Temporary_documents", "keys", folderName);
+              string valueFolderPath = Path.Combine("Temporary_documents", "values", folderName);
 
-            Directory.CreateDirectory(keyFolderPath);
-            Directory.CreateDirectory(valueFolderPath);
-
-            _logger.LogInformation($"Folders created for operation {folderName}");
+              Directory.CreateDirectory(keyFolderPath);
+              Directory.CreateDirectory(valueFolderPath);
+              _logger.LogInformation($"Folders created for operation {folderName}"); 
         }
         catch (Exception ex)
         {
@@ -190,12 +190,6 @@ public class TranslatorService : ITranslatorService
         if (response.IsSuccessStatusCode)
         {
             _logger.LogInformation($"Status code: {response.StatusCode}");
-            _logger.LogInformation("Response Headers:");
-            foreach (var header in response.Headers)
-            {
-                _logger.LogInformation($"{header.Key}: {string.Join(",", header.Value)}");
-            }
-
             string jobStatusUrl = response.Headers.GetValues("Operation-Location").FirstOrDefault();
             return await CheckJobStatusAsync(jobStatusUrl, client);
         }
@@ -268,44 +262,59 @@ public class TranslatorService : ITranslatorService
 
     public async Task DownloadConvertedFiles(string operationGuid)
     {
-        var blobServiceClient = new BlobServiceClient(_blobServiceClientEndpoint);
-        var blobContainerClient = blobServiceClient.GetBlobContainerClient("translateddocs");
-
-        var blobs = blobContainerClient.GetBlobsAsync(prefix: operationGuid);
-
-        Directory.CreateDirectory(@$"Temporary_documents\translated_documents\{operationGuid}");
-
-        await foreach (var blobItem in blobs)
+        try
         {
-            BlobClient blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
-            string blobName = blobItem.Name;
-            string[] parts = blobName.Split('/');
-            string fileName = parts[parts.Length - 1];
-            string secondPartOfTheBlobName = parts[1];
-            if (secondPartOfTheBlobName != "json")
-            {
-                blobClient.DownloadTo(@$"Temporary_documents\translated_documents\{operationGuid}\" + fileName);
-                Console.WriteLine($"Blob '{blobItem.Name}' downloaded.");
-            }
-            else
-            {
-                string guidOfValueExcelWithExtension = parts[2];
-                string[] seperatedParts = guidOfValueExcelWithExtension.Split('.');
-                string guidOfValueExcel = seperatedParts[0];
-                var memoryStreamOfTranslatedExcelFile = new MemoryStream();
-                blobClient.DownloadTo(memoryStreamOfTranslatedExcelFile);
-                // Create a workbook from the MemoryStream
-                // Workbook translatedValuesWorkbook = new Workbook(memoryStreamOfTranslatedExcelFile);
-                string consvertedJson = await CombineExcelToJson(memoryStreamOfTranslatedExcelFile, operationGuid, guidOfValueExcel);
-                File.WriteAllText(@$"Temporary_documents\translated_documents\{operationGuid}\{guidOfValueExcel}.json", consvertedJson);
-            }
-        }
+            var blobServiceClient = new BlobServiceClient(_blobServiceClientEndpoint);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient("translateddocs");
 
-        string folderPathForStoringZipFiles = @$"wwwroot\translated_files_as_zip\{operationGuid}";
-        Directory.CreateDirectory(folderPathForStoringZipFiles);
-        CreateZipFromTranslatedDocumentsAsync(operationGuid);
-        // return Task.CompletedTask;
+            var blobs = blobContainerClient.GetBlobsAsync(prefix: operationGuid);
+
+            Directory.CreateDirectory(@$"Temporary_documents\translated_documents\{operationGuid}");
+
+            await foreach (var blobItem in blobs)
+            {
+                try
+                {
+                    BlobClient blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
+                    string blobName = blobItem.Name;
+                    string[] parts = blobName.Split('/');
+                    string fileName = parts[parts.Length - 1];
+                    string secondPartOfTheBlobName = parts[1];
+                    if (secondPartOfTheBlobName != "json")
+                    {
+                        blobClient.DownloadTo(@$"Temporary_documents\translated_documents\{operationGuid}\" + fileName);
+                        Console.WriteLine($"Blob '{blobItem.Name}' downloaded.");
+                    }
+                    else
+                    {
+                        string guidOfValueExcelWithExtension = parts[2];
+                        string[] seperatedParts = guidOfValueExcelWithExtension.Split('.');
+                        string guidOfValueExcel = seperatedParts[0];
+                        var memoryStreamOfTranslatedExcelFile = new MemoryStream();
+                        blobClient.DownloadTo(memoryStreamOfTranslatedExcelFile);
+                        // Create a workbook from the MemoryStream
+                        // Workbook translatedValuesWorkbook = new Workbook(memoryStreamOfTranslatedExcelFile);
+                        string consvertedJson = await CombineExcelToJson(memoryStreamOfTranslatedExcelFile, operationGuid, guidOfValueExcel);
+                        File.WriteAllText(@$"Temporary_documents\translated_documents\{operationGuid}\{guidOfValueExcel}.json", consvertedJson);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"An error occurred downloading document: {ex.Message}");
+                }
+            }
+
+            string folderPathForStoringZipFiles = @$"wwwroot\translated_files_as_zip\{operationGuid}";
+            Directory.CreateDirectory(folderPathForStoringZipFiles);
+            await CreateZipFromTranslatedDocumentsAsync(operationGuid);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"An error occurred while downloading converted files{ex.Message}");
+            throw;
+        }
     }
+
 
     public async Task CreateZipFromTranslatedDocumentsAsync(string operationGuid)
     {
@@ -320,7 +329,7 @@ public class TranslatorService : ITranslatorService
         catch (Exception ex)
         {
             _logger.LogError($"An error occurred while creating the zip file: {ex.Message}");
-            // throw;
+             throw;
         }
     }
 
@@ -438,7 +447,7 @@ public class TranslatorService : ITranslatorService
             await foreach (var blobItem in blobContainerClient.GetBlobsAsync(prefix: operationGuid))
             {
                 await blobContainerClient.DeleteBlobIfExistsAsync(blobItem.Name);
-                _logger.LogInformation($"Blob '{blobItem.Name}' in Input Container deleted.");
+                _logger.LogInformation($"Blob '{blobItem.Name}' in Output Container deleted.");
             }
         }
         catch (Exception ex)

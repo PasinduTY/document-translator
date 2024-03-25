@@ -1,20 +1,29 @@
 ﻿
+using Microsoft.Extensions.Configuration;
+
 public class SynchronousTranslationService : ISynchronousTranslationService
 {
     
-    private static readonly string endpoint = "https://testcreative.cognitiveservices.azure.com/";
-    private static readonly string subscriptionKey = "d7459b863ba14c74a1d0ae0cf699da63";
-    //private static readonly string sourceLanguage = "en";
-    //private static readonly string targetLanguage = "hi";
+    private readonly ILogger _logger;
+    private IConfiguration _configuration;
+    private readonly string _endpoint;
+    private readonly string _key;
     private static readonly string apiVersion = "2023-11-01-preview";
 
-    public async Task TranslateDocument(string inputFilePath, string outputFilePath, String targetLanguage)
+    public SynchronousTranslationService(IConfiguration configuration, ILogger<ISynchronousTranslationService> logger)
     {
-        string url = $"{endpoint}/translator/document:translate";
+        _configuration = configuration;
+        _logger = logger;
+        _endpoint = _configuration.GetConnectionString("Translator.Endpoint");
+        _key = _configuration.GetConnectionString("Translator.Key");
+    }
+    public async Task TranslateDocument(string inputFilePath, string outputFilePath, string targetLanguage)
+    {
+        string url = $"{_endpoint}/translator/document:translate";
 
         using (HttpClient client = new HttpClient())
         {
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _key);
 
             var content = new MultipartFormDataContent();
             var fileStream = new FileStream(inputFilePath, FileMode.Open);
@@ -35,12 +44,12 @@ public class SynchronousTranslationService : ISynchronousTranslationService
                 using (var outputDocument = new FileStream(outputFilePath, FileMode.Create))
                 {
                     await response.Content.CopyToAsync(outputDocument);
-                    Console.WriteLine("Synchronous Successful");
+                    _logger.LogInformation("Translation successful.");
                 }
             }
             else
-            {  
-                Console.WriteLine($"Error: {response.ReasonPhrase}");
+            {
+                _logger.LogError("Error during translation");
             }
         }
     }
