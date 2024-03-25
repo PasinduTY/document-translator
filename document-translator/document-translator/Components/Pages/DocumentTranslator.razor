@@ -6,6 +6,7 @@
 @inherits OwningComponentBase
 @inject ITranslatorService iTranslatorService
 @inject NotificationService notificationService
+@inject DialogService dialogService
 @inject IJSRuntime JSRuntime
 @inject ISynchronousTranslationService iSynchronousTranslationService
 @inject ITextTranslateService iTextTranslateService
@@ -50,6 +51,7 @@
         <div style="display: flex; justify-content: center; margin-top: 20px;">
             <RadzenText TextStyle="TextStyle.Subtitle2" hidden="@(!isDownloaded)">@uploadedDocumentCount Documents Downloaded</RadzenText>
         </div>
+
     </RadzenCard>
 </div>
 

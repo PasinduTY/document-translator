@@ -1,6 +1,8 @@
+using Aspose.Cells;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using Radzen;
+using Radzen.Blazor;
 using Radzen.Blazor.Rendering;
 using System.Text.Json;
 using static System.Net.Mime.MediaTypeNames;
@@ -178,14 +180,18 @@ namespace document_translator.Components.Pages
 
         private async Task onClickReset()
         {
-            if(!isUploaded&& !isTranslated)
+           // var  result = await dialogService.Confirm("Are you sure?", "Cancel Translation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+            if (!isUploaded&& !isTranslated)
             {
                 ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "You haven't start the translation to cancel", Duration = 4000 });
+
             }
+
             else if(isUploaded && !isTranslated)
             {
+                dialogService.Confirm("Are you sure?", "MyTitle", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
                 iTranslatorService.DeleteFilesInInputContainerOfOperation(operationGuid);
-                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Successfully canceled operation. Upload documents again", Duration = 4000 });
 
             }
             else if (isUploaded && isTranslated)
@@ -195,9 +201,7 @@ namespace document_translator.Components.Pages
                 if (jsonTranslationInitialized)
                 {
                     await iTranslatorService.DeleteKeyAndValueFolders(operationGuid);
-                }
-                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Successfully canceled operation. Upload documents again", Duration = 4000 });
-            }
+                }            }
             resetTranslation();
         }
 
@@ -208,7 +212,8 @@ namespace document_translator.Components.Pages
                 await DownloadAsZipFile();
                 ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Download Complete", Duration = 4000 });
                 resetTranslation();
-                //await CleanTheFiles();
+                await Task.Delay(3000);
+                await CleanTheFiles();
             }
             catch (Exception ex)
             {
