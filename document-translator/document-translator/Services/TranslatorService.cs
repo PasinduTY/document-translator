@@ -7,6 +7,8 @@ using Aspose.Cells;
 using System;
 using System.IO.Compression;
 using Newtonsoft.Json;
+using Aspose.Cells.Drawing;
+using System.Linq.Expressions;
 public class TranslatorService : ITranslatorService
 {
     private IConfiguration _configuration;
@@ -218,68 +220,73 @@ public class TranslatorService : ITranslatorService
         }
     }
 
-
     /// <summary>
     /// Initiates the translation process for a specified language and operation.
     /// </summary>
     /// <param name="languageCode">The language code for the translation.</param>
     /// <param name="operationGuid">The GUID of the operation.</param>
-    /// <returns>
-    /// True if the translation request was successful and completed; otherwise, false.
-    /// </returns>
+    /// <returns>Number of successful translations if the translation process completes successfully; otherwise, returns 0.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="languageCode"/> or <paramref name="operationGuid"/> is null.</exception>
-    public async Task<bool> TranslateAsync(string languageCode, string operationGuid)
+    public async Task<short> TranslateAsync(string languageCode, string operationGuid)
     {
-        // Instantiate a new HttpClient within a using statement to ensure proper disposal
-        using HttpClient client = new HttpClient();
-
-        // Create a new HTTP request message
-        using HttpRequestMessage request = new HttpRequestMessage
+        try
         {
-            Method = HttpMethod.Post,
-            RequestUri = new Uri(_endpoint + route),
-            Content = new StringContent(
-                $"{{\"inputs\": [{{\"source\": {{\"sourceUrl\": \"{_sourceUrl}\", \"filter\": {{\"prefix\": \"{operationGuid}/\"}}}}, \"targets\": [{{\"targetUrl\": \"{_targetUrl}\", \"language\": \"{languageCode}\"}}]}}]}}",
-                Encoding.UTF8,
-                "application/json")
-        };
+            // Instantiate a new HttpClient within a using statement to ensure proper disposal
+            using HttpClient client = new HttpClient();
 
-        // Add subscription key to request headers
-        request.Headers.Add("Ocp-Apim-Subscription-Key", _key);
+            // Create a new HTTP request message
+            using HttpRequestMessage request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_endpoint + route),
+                Content = new StringContent(
+                    $"{{\"inputs\": [{{\"source\": {{\"sourceUrl\": \"{_sourceUrl}\", \"filter\": {{\"prefix\": \"{operationGuid}/\"}}}}, \"targets\": [{{\"targetUrl\": \"{_targetUrl}\", \"language\": \"{languageCode}\"}}]}}]}}",
+                    Encoding.UTF8,
+                    "application/json")
+            };
 
-        // Send the HTTP request and await the response
-        HttpResponseMessage response = await client.SendAsync(request);
+            // Add subscription key to request headers
+            request.Headers.Add("Ocp-Apim-Subscription-Key", _key);
 
-        if (response.IsSuccessStatusCode)
-        {
-            // Log information about the response status code
-            _logger.LogInformation($"Status code: {response.StatusCode}");
+            // Send the HTTP request and await the response
+            HttpResponseMessage response = await client.SendAsync(request);
 
-            // Extract the job status URL from the response headers
-            string jobStatusUrl = response.Headers.GetValues("Operation-Location").FirstOrDefault();
+            if (response.IsSuccessStatusCode)
+            {
+                // Log information about the response status code
+                _logger.LogInformation($"Status code: {response.StatusCode}");
 
-            // Check the status of the translation job
-            return await CheckJobStatusAsync(jobStatusUrl, client);
+                // Extract the job status URL from the response headers
+                string jobStatusUrl = response.Headers.GetValues("Operation-Location").FirstOrDefault();
+
+                // Check the status of the translation job
+                return await CheckJobStatusAsync(jobStatusUrl, client);
+            }
+            else
+            {
+                // Log an error if the request was not successful
+                _logger.LogError($"Error: {response}");
+                return 0;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            // Log an error if the request was not successful
-            _logger.LogError($"Error: {response.StatusCode}");
-            return false;
+            // Log any exceptions that occur during the translation process
+            _logger.LogError($"Error: {ex}");
+            return 0;
         }
     }
 
-
     /// <summary>
-    /// Checks the status of a translation job by polling the provided job status URL.
+    /// Checks the status of a job asynchronously.
     /// </summary>
-    /// <param name="jobStatusUrl">The URL for checking the status of the translation job.</param>
-    /// <param name="client">The HttpClient instance used for sending the request.</param>
-    /// <returns>
-    /// True if the translation job succeeded; otherwise, false.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="jobStatusUrl"/> or <paramref name="client"/> is null.</exception>
-    private async Task<bool> CheckJobStatusAsync(string jobStatusUrl, HttpClient client)
+    /// <remarks>
+    /// This method polls the job status URL until either the job succeeds or a timeout occurs.
+    /// </remarks>
+    /// <param name="jobStatusUrl">The URL for checking the job status.</param>
+    /// <param name="client">The HttpClient instance used for sending requests.</param>
+    /// <returns>The number of successful translations if the job succeeded; otherwise, returns 0.</returns>
+    private async Task<short> CheckJobStatusAsync(string jobStatusUrl, HttpClient client)
     {
         // Record the start time for timeout calculation
         DateTime startTime = DateTime.Now;
@@ -301,7 +308,7 @@ public class TranslatorService : ITranslatorService
             HttpResponseMessage jobStatusRequestResponse = await client.SendAsync(jobStatusRequest);
 
             // Check if the request was successful
-            if (jobStatusRequestResponse.StatusCode == HttpStatusCode.OK)
+            if (jobStatusRequestResponse.IsSuccessStatusCode)
             {
                 // Parse the response JSON to extract the job status
                 using JsonDocument document = await JsonDocument.ParseAsync(await jobStatusRequestResponse.Content.ReadAsStreamAsync());
@@ -309,18 +316,19 @@ public class TranslatorService : ITranslatorService
                 string status = root.GetProperty("status").GetString();
 
                 // Check the status of the job
-                if (status == "ValidationFailed")
+                if (status == "ValidationFailed" || status == "Canceled" || status == "Cancelling" || status == "Failed")
                 {
-                    return false; // Job failed due to validation issues
+                    _logger.LogInformation($"Reason for failure of translation : {root.GetProperty("error")}");
+                    return 0;
                 }
 
                 if (status == "Succeeded")
                 {
-                    return true; // Job succeeded
+                    short numberOfSuccessfulTranslations = root.GetProperty("summary").GetProperty("success").GetInt16();
+                    return numberOfSuccessfulTranslations;
                 }
 
-                // Log information about the status code and status
-                _logger.LogInformation($"Status code: {jobStatusRequestResponse.StatusCode}");
+                // Log information about the status 
                 _logger.LogInformation($"Status: {status}");
             }
 
@@ -331,7 +339,7 @@ public class TranslatorService : ITranslatorService
         // Log a message indicating a timeout occurred
         _logger.LogInformation("Timeout");
 
-        return false; // Timeout occurred
+        return 0; // Timeout occurred
     }
 
 

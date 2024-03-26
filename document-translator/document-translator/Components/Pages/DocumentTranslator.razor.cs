@@ -63,7 +63,6 @@ namespace document_translator.Components.Pages
                     }catch (Exception ex) {
                         //fill
                     }
-
                 }
                 bool isUploaded = await iTranslatorService.UploadDocumentsAsync(memoryStreamOfFile, blobName);
                 if (isUploaded)
@@ -161,25 +160,36 @@ namespace document_translator.Components.Pages
             }
             else
             {
-                isTranslating = true;
-                String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
-                bool translatedOrNot =  await iTranslatorService.TranslateAsync(langCode, operationGuid);
-               /*  if (translatedFileCount > 0)
+                try
                 {
-                     translatedOrNot=true;
-                }*/
-               // Console.WriteLine(translatedFileCount.ToString());
-                isTranslating = false;
-                if (translatedOrNot)
-                {
-                    ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Translation Successful", Duration = 4000 });
-                    isTranslated = true;
-                }
-                else
+                    isTranslating = true;
+                    String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
+                    short translatedDocumentCount = await iTranslatorService.TranslateAsync(langCode, operationGuid);
+                    isTranslating = false;
+                    if (translatedDocumentCount > 0)
+                    {
+                        if (uploadedDocumentCount == translatedDocumentCount)
+                        {
+                            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Translation Successful", Duration = 4000 });
+                            isTranslated = true;
+                        }
+                        else
+                        {
+                            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Translation Successful Partially", Duration = 4000 });
+                            isTranslated = true;
+                        }
+                    }
+                    else
+                    {
+                        ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Translation is not Successful. Try Again", Duration = 4000 });
+                        iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+                    }
+                }catch(Exception ex)
                 {
                     ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Translation is not Successful. Try Again", Duration = 4000 });
-                    iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+
                 }
+
             }
         }
 

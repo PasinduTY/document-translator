@@ -15,7 +15,7 @@ public interface ITranslatorService
     // methods used in azure ai translator
 
     Task<bool> UploadDocumentsAsync(MemoryStream memoryStreamOfDocument, string blobName);
-    Task<bool> TranslateAsync(string languageCode, string operationGuid);
+    Task<short> TranslateAsync(string languageCode, string operationGuid);
     Task DownloadConvertedFiles(string operationGuid);
 
     // methods used in cleaning or resetting 
