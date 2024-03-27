@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Components.Forms;
 public interface ITranslatorService
 {
     // methods used in json, excel convertion
-    Task<string> ConvertToExcelAsync(IBrowserFile file, string guid);
+    Task<string> ConvertToExcelAsync(MemoryStream memoryStreamOfJsonFile, string guid);
     Task<string> CombineExcelToJson(MemoryStream memoryStreamOfTranslatedExcelFile, string operationGuid, string guidOfValueExcel);
     Task CreateFolderForOperation(string folderName);
 

@@ -32,7 +32,6 @@ namespace document_translator.Components.Pages
                 string blobName="";
                 MemoryStream memoryStreamOfFile=null;
                 string contentType = file.ContentType;
-                Console.Write(contentType);
                 if (file.ContentType == "application/json")
                 {
                         try
@@ -42,7 +41,10 @@ namespace document_translator.Components.Pages
                             iTranslatorService.CreateFolderForOperation(operationGuid);
                             jsonTranslationInitialized = true;
                         }
-                            string uploadedDocumentGuid = await iTranslatorService.ConvertToExcelAsync(file, operationGuid);
+                            using var memoryStreamOfJsonFile = new MemoryStream();
+                            await file.OpenReadStream().CopyToAsync(memoryStreamOfJsonFile);
+                            memoryStreamOfJsonFile.Seek(0, SeekOrigin.Begin);
+                            string uploadedDocumentGuid = await iTranslatorService.ConvertToExcelAsync(memoryStreamOfJsonFile, operationGuid);
                             memoryStreamOfFile = await iTranslatorService.GetTheMemoryStreamFromValueExcel(operationGuid, uploadedDocumentGuid);
                             blobName = $"{operationGuid}/json/{uploadedDocumentGuid}.xlsx";
                         }
@@ -54,7 +56,7 @@ namespace document_translator.Components.Pages
                 {
                     try
                     {
-                        var stream = file.OpenReadStream();
+                        using var stream = file.OpenReadStream();
                         memoryStreamOfFile = new MemoryStream();
                         await stream.CopyToAsync(memoryStreamOfFile);
                         memoryStreamOfFile.Position = 0;
@@ -237,9 +239,10 @@ namespace document_translator.Components.Pages
             {
                 await DownloadAsZipFile();
                 ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Download Complete", Duration = 4000 });
-                resetTranslation();
                 await Task.Delay(3000);
                 await CleanTheFiles();
+                resetTranslation();
+
             }
             catch (Exception ex)
             {

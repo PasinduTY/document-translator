@@ -49,25 +49,22 @@ public class TranslatorService : ITranslatorService
     /// The unique GUID assigned to the generated Excel files.
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="file"/> or <paramref name="operationGuid"/> is null.</exception>
-    public async Task<string> ConvertToExcelAsync(IBrowserFile file, string operationGuid)
+    public async Task<string> ConvertToExcelAsync(MemoryStream memoryStreamOfJsonFile, string operationGuid)
     {
         try
         {
-            // Using MemoryStream and StreamReader to read the content of the file
-            using var memoryStream = new MemoryStream();
-            await file.OpenReadStream().CopyToAsync(memoryStream);
-            memoryStream.Seek(0, SeekOrigin.Begin);
-            using var reader = new StreamReader(memoryStream);
+            // Using StreamReader to read the content of the file
+            using var reader = new StreamReader(memoryStreamOfJsonFile);
             string json = await reader.ReadToEndAsync();
 
             // Deserializing JSON content into a dictionary
             var jsonObject = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
 
             // Creating workbooks and worksheets
-            Workbook keysWorkbook = new Workbook();
-            Worksheet keysWorksheet = keysWorkbook.Worksheets[0];
-            Workbook valuesWorkbook = new Workbook();
-            Worksheet valuesWorksheet = valuesWorkbook.Worksheets[0];
+            using Workbook keysWorkbook = new Workbook();
+            using Worksheet keysWorksheet = keysWorkbook.Worksheets[0];
+            using  Workbook valuesWorkbook = new Workbook();
+            using Worksheet valuesWorksheet = valuesWorkbook.Worksheets[0];
 
             // Populating worksheets with key-value pairs
             int row = 0;
@@ -121,12 +118,12 @@ public class TranslatorService : ITranslatorService
             string keyFolderPath = Path.Combine("Temporary_documents", "keys", operationGuid, $"{guidOfValueExcel}.xlsx");
 
             // Load keys workbook from file
-            Workbook keysWorkbook = new Workbook(keyFolderPath);
-            Worksheet keysWorksheet = keysWorkbook.Worksheets[0];
+            using Workbook keysWorkbook = new Workbook(keyFolderPath);
+            using Worksheet keysWorksheet = keysWorkbook.Worksheets[0];
 
             // Create a workbook from the MemoryStream
-            Workbook valuesWorkbook = new Workbook(memoryStreamOfTranslatedExcelFile);
-            Worksheet valuesWorksheet = valuesWorkbook.Worksheets[0];
+            using Workbook valuesWorkbook = new Workbook(memoryStreamOfTranslatedExcelFile);
+            using Worksheet valuesWorksheet = valuesWorkbook.Worksheets[0];
 
             Dictionary<string, string> combinedData = new Dictionary<string, string>();
 
@@ -365,6 +362,7 @@ public class TranslatorService : ITranslatorService
             // Upload the document to Blob storage
             await containerClient.UploadBlobAsync(blobName, memoryStreamOfDocument);
 
+            memoryStreamOfDocument.Close();
             // Log information about the successful upload
             _logger.LogInformation($"Uploaded {blobName} successfully.");
 
@@ -431,7 +429,7 @@ public class TranslatorService : ITranslatorService
                         string guidOfValueExcelWithExtension = parts[2];
                         string[] seperatedParts = guidOfValueExcelWithExtension.Split('.');
                         string guidOfValueExcel = seperatedParts[0];
-                        var memoryStreamOfTranslatedExcelFile = new MemoryStream();
+                        using var memoryStreamOfTranslatedExcelFile = new MemoryStream();
                         blobClient.DownloadTo(memoryStreamOfTranslatedExcelFile);
 
                         // Convert the JSON content to Excel format
