@@ -1,13 +1,10 @@
 ﻿using System.Text;
 using System.Transactions;
 using Newtonsoft.Json;
-public class TextTranslateSerrvice : ITextTranslateService
+public class TextTranslateService : ITextTranslateService
 {
     private static readonly string key = "d7459b863ba14c74a1d0ae0cf699da63";
     private static readonly string endpoint = "https://api.cognitive.microsofttranslator.com";
-
-    // location, also known as region.
-    // required if you're using a multi-service or regional (not global) resource. It can be found in the Azure portal on the Keys and Endpoint page.
     private static readonly string location = "centralindia";
 
     public async Task<string> TextTranslator(string textToTranslate, string targetLanguage)

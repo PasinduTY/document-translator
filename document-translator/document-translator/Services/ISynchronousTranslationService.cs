@@ -1,6 +1,9 @@
 ﻿
     public interface ISynchronousTranslationService
 {
-     Task TranslateDocument(string inputFilePath, string outputFilePath, String targetLanguage);
+    Task<byte[]> TranslateDocument(byte[] inputDocument, string targetLanguage);
+    public string GetFileType(byte[] fileBytes);
+    public bool IdentifyJson(byte[] fileBytes);
+
 }
 

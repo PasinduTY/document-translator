@@ -1,9 +1,13 @@
 using Aspose.Cells;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.JSInterop;
+using MimeDetective;
+using Newtonsoft.Json.Serialization;
 using Radzen;
 using Radzen.Blazor;
 using Radzen.Blazor.Rendering;
+using System.Text;
 using System.Text.Json;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -111,10 +115,15 @@ namespace document_translator.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            byte[] fileBytes = File.ReadAllBytes("C:/Users/pasindu.si/Downloads/1.txt");
+            //String A = iSynchronousTranslationService.GetFileType(fileBytes);
+            //Console.WriteLine(A);
+            //MemoryStream stream = new MemoryStream(fileBytes);
+            //byte[] translatedFile = await iSynchronousTranslationService.TranslateDocument(fileBytes, "fr");
+            Console.WriteLine(iSynchronousTranslationService.GetFileType(fileBytes));
             
-            //iSynchronousTranslationService.TranslateDocument("C:/Users/pasindu.si/Downloads/1.txt", "D:/Syn/output.txt", "hi");
             //String translatedText = await iTextTranslateService.TextTranslator("I would really like to drive your car around the block a few times.", "fr");
-           // Console.WriteLine(translatedText);
+            //Console.WriteLine(translatedText);
             await base.OnInitializedAsync();
             
 
