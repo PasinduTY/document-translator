@@ -36,7 +36,6 @@ namespace document_translator.Components.Pages
                 string blobName="";
                 MemoryStream memoryStreamOfFile=null;
                 string contentType = file.ContentType;
-                Console.Write(contentType);
                 if (file.ContentType == "application/json")
                 {
                         try
@@ -46,7 +45,10 @@ namespace document_translator.Components.Pages
                             iTranslatorService.CreateFolderForOperation(operationGuid);
                             jsonTranslationInitialized = true;
                         }
-                            string uploadedDocumentGuid = await iTranslatorService.ConvertToExcelAsync(file, operationGuid);
+                            using var memoryStreamOfJsonFile = new MemoryStream();
+                            await file.OpenReadStream().CopyToAsync(memoryStreamOfJsonFile);
+                            memoryStreamOfJsonFile.Seek(0, SeekOrigin.Begin);
+                            string uploadedDocumentGuid = await iTranslatorService.ConvertToExcelAsync(memoryStreamOfJsonFile, operationGuid);
                             memoryStreamOfFile = await iTranslatorService.GetTheMemoryStreamFromValueExcel(operationGuid, uploadedDocumentGuid);
                             blobName = $"{operationGuid}/json/{uploadedDocumentGuid}.xlsx";
                         }
@@ -58,7 +60,7 @@ namespace document_translator.Components.Pages
                 {
                     try
                     {
-                        var stream = file.OpenReadStream();
+                        using var stream = file.OpenReadStream();
                         memoryStreamOfFile = new MemoryStream();
                         await stream.CopyToAsync(memoryStreamOfFile);
                         memoryStreamOfFile.Position = 0;
@@ -67,7 +69,6 @@ namespace document_translator.Components.Pages
                     }catch (Exception ex) {
                         //fill
                     }
-
                 }
                 bool isUploaded = await iTranslatorService.UploadDocumentsAsync(memoryStreamOfFile, blobName);
                 if (isUploaded)
@@ -173,25 +174,36 @@ namespace document_translator.Components.Pages
             }
             else
             {
-                isTranslating = true;
-                String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
-                bool translatedOrNot =  await iTranslatorService.TranslateAsync(langCode, operationGuid);
-               /*  if (translatedFileCount > 0)
+                try
                 {
-                     translatedOrNot=true;
-                }*/
-               // Console.WriteLine(translatedFileCount.ToString());
-                isTranslating = false;
-                if (translatedOrNot)
-                {
-                    ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Translation Successful", Duration = 4000 });
-                    isTranslated = true;
-                }
-                else
+                    isTranslating = true;
+                    String langCode = languages.Where(language => language.Value.name == value).FirstOrDefault().Key;
+                    short translatedDocumentCount = await iTranslatorService.TranslateAsync(langCode, operationGuid);
+                    isTranslating = false;
+                    if (translatedDocumentCount > 0)
+                    {
+                        if (uploadedDocumentCount == translatedDocumentCount)
+                        {
+                            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Translation Successful", Duration = 4000 });
+                            isTranslated = true;
+                        }
+                        else
+                        {
+                            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Translation Successful Partially", Duration = 4000 });
+                            isTranslated = true;
+                        }
+                    }
+                    else
+                    {
+                        ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Translation is not Successful. Try Again", Duration = 4000 });
+                        iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+                    }
+                }catch(Exception ex)
                 {
                     ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Translation is not Successful. Try Again", Duration = 4000 });
-                    iTranslatorService.DeleteFilesInOutputContainerOfOperation(operationGuid);
+
                 }
+
             }
         }
 
@@ -239,9 +251,10 @@ namespace document_translator.Components.Pages
             {
                 await DownloadAsZipFile();
                 ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Download Complete", Duration = 4000 });
-                resetTranslation();
                 await Task.Delay(3000);
                 await CleanTheFiles();
+                resetTranslation();
+
             }
             catch (Exception ex)
             {
