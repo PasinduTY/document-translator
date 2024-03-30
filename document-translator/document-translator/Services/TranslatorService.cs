@@ -9,6 +9,9 @@ using System.IO.Compression;
 using Newtonsoft.Json;
 using Aspose.Cells.Drawing;
 using System.Linq.Expressions;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json.Linq;
+
 public class TranslatorService : ITranslatorService
 {
     private IConfiguration _configuration;
@@ -23,6 +26,15 @@ public class TranslatorService : ITranslatorService
     private readonly int _timeoutPeriod;
     private readonly int _timeIntervalPeriod;
     static readonly string route = "/batches";
+    string keyguid;
+
+    private static readonly string endpoint = "https://abc-ai-translator.cognitiveservices.azure.com/";
+    private static readonly string subscriptionKey = "e40a0130bc4b4c34bb2fd3dd16fe2752";
+    private static readonly string apiVersion = "2023-11-01-preview";
+
+    private static readonly string key = "d7459b863ba14c74a1d0ae0cf699da63";
+    private static readonly string textendpoint = "https://api.cognitive.microsofttranslator.com";
+    private static readonly string location = "centralindia";
 
     public TranslatorService(IConfiguration configuration, ILogger<ITranslatorService> logger)
     {
@@ -85,6 +97,7 @@ public class TranslatorService : ITranslatorService
 
             // Saving workbooks to temporary directories
             string keysFilePath = Path.Combine("Temporary_documents", "keys", operationGuid, $"{guidString}.xlsx");
+            Console.WriteLine( keysFilePath );
             string valuesFilePath = Path.Combine("Temporary_documents", "values", operationGuid, $"{guidString}.xlsx");
 
             keysWorkbook.Save(keysFilePath);
@@ -734,6 +747,173 @@ public class TranslatorService : ITranslatorService
             Console.WriteLine($"Blob '{blobItem.Name}' deleted.");
         }
     }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    public async Task<byte[]> SyncTranslateDocument(byte[] inputDocument, string targetLanguage)
+    {
+        bool isJson;
+        string syncOperationGuid = Guid.NewGuid().ToString();
+        byte[] translatedFile;
+        string url = $"{endpoint}/translator/document:translate";
+        using (HttpClient client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
+            isJson = IdentifyJson(inputDocument);
+            var content = new MultipartFormDataContent();
+            MemoryStream stream = new MemoryStream(inputDocument);
+            
+
+            if (isJson)
+            {
+                await CreateFolderForOperation(syncOperationGuid);
+                string decomposedDocumentGuid = await ConvertToExcelAsync(stream, syncOperationGuid);
+                keyguid = decomposedDocumentGuid;
+                stream = await GetTheMemoryStreamFromValueExcel(syncOperationGuid, decomposedDocumentGuid);
+            }
+            //content.Add(new ByteArrayContent(inputDocument), "document", "document-translation-sample.docx");
+            
+            content.Add(new StreamContent(stream), "document", "document-translation-sample.xlsx");
+
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+            queryString["targetLanguage"] = targetLanguage;
+            queryString["api-version"] = apiVersion;
+
+            url += "?" + queryString.ToString();
+
+            var response = await client.PostAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Synchronous Successful");
+                translatedFile = await response.Content.ReadAsByteArrayAsync();
+                
+                if (isJson) 
+                {
+                    MemoryStream memoryStream = new MemoryStream(translatedFile);
+                    string translatedJson = await CombineExcelToJson(memoryStream,syncOperationGuid,keyguid);
+                    translatedFile = Encoding.UTF8.GetBytes(translatedJson);
+                }
+                
+                File.WriteAllBytes("D:/Syn/Output.json", translatedFile);
+                return translatedFile;
+
+            }
+            else
+            {
+                string errorMessage = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {response.ReasonPhrase}. Details: {errorMessage}");
+                return null;
+
+            }
+        }
+    }
+
+
+    public bool IdentifyJson(byte[] fileBytes)
+    {
+        try
+        {
+            string jsonString = System.Text.Encoding.UTF8.GetString(fileBytes);
+            JToken.Parse(jsonString);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public async Task<string> TextTranslator(string textToTranslate, string targetLanguage)
+    {
+        // Input and output languages are defined as parameters.
+        string route = $"/translate?api-version=3.0&to={targetLanguage}";
+        //string textToTranslate = "I would really like to drive your car around the block a few times!";
+        object[] body = new object[] { new { Text = textToTranslate } };
+        var requestBody = JsonConvert.SerializeObject(body);
+
+        using (var client = new HttpClient())
+        using (var request = new HttpRequestMessage())
+        {
+            // Build the request.
+            request.Method = HttpMethod.Post;
+            request.RequestUri = new Uri(textendpoint + route);
+            request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+            request.Headers.Add("Ocp-Apim-Subscription-Key", key);
+            // location required if you're using a multi-service or regional (not global) resource.
+            request.Headers.Add("Ocp-Apim-Subscription-Region", location);
+
+            // Send the request and get response.
+            HttpResponseMessage response = await client.SendAsync(request).ConfigureAwait(false);
+            // Read response as a string.
+            string result = await response.Content.ReadAsStringAsync();
+            var translations = JsonConvert.DeserializeObject<dynamic[]>(result);
+
+            // Iterate over translations and print "text" values
+            foreach (var translation in translations)
+            {
+                foreach (var t in translation.translations)
+                {
+                    return (t.text);
+                }
+            }
+
+            return "Translation not available";
+
+        }
+    }
+
 
 }
 

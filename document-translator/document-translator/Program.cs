@@ -12,7 +12,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<ITranslatorService,TranslatorService >();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<DialogService>();
-builder.Services.AddScoped<ISynchronousTranslationService,SynchronousTranslationService>();
+//builder.Services.AddScoped<ISynchronousTranslationService,SynchronousTranslationService>();
 builder.Services.AddScoped<ITextTranslateService,TextTranslateService>();
 
 // Configure Serilog for file logging
