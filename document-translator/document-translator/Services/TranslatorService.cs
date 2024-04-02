@@ -748,6 +748,54 @@ public class TranslatorService : ITranslatorService
         }
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
     
     
     
@@ -801,7 +849,65 @@ public class TranslatorService : ITranslatorService
     
     
     
-    public async Task<byte[]> SyncTranslateDocument(byte[] inputDocument, string targetLanguage)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /// <summary>
+    /// Translates a document synchronously(No need to upload document to a container) to a selected language.
+    /// </summary>
+    /// <param name="inputDocument">The document that need to be translate</param>
+    /// <param name="targetLanguage">Expected Language of the translated document</param>
+    /// <param name="filename">File name of the inputdocument with the extension eg:Mydocument.docx </param>
+    /// <returns>
+    /// Returns the translated document as a byte array.
+    /// </returns>
+
+    public async Task<byte[]> SyncTranslateDocument(byte[] inputDocument, string targetLanguage, string filename)
     {
         bool isJson;
         string syncOperationGuid = Guid.NewGuid().ToString();
@@ -821,10 +927,13 @@ public class TranslatorService : ITranslatorService
                 string decomposedDocumentGuid = await ConvertToExcelAsync(stream, syncOperationGuid);
                 keyguid = decomposedDocumentGuid;
                 stream = await GetTheMemoryStreamFromValueExcel(syncOperationGuid, decomposedDocumentGuid);
+                content.Add(new StreamContent(stream), "document", "jsonfile.xlsx");
+            }
+            else 
+            {
+                content.Add(new StreamContent(stream), "document", filename);
             }
             //content.Add(new ByteArrayContent(inputDocument), "document", "document-translation-sample.docx");
-            
-            content.Add(new StreamContent(stream), "document", "document-translation-sample.xlsx");
 
             var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
             queryString["targetLanguage"] = targetLanguage;
@@ -846,7 +955,7 @@ public class TranslatorService : ITranslatorService
                     translatedFile = Encoding.UTF8.GetBytes(translatedJson);
                 }
                 
-                File.WriteAllBytes("D:/Syn/Output.json", translatedFile);
+                File.WriteAllBytes("D:/Syn/Output.docx", translatedFile);
                 return translatedFile;
 
             }
@@ -861,6 +970,13 @@ public class TranslatorService : ITranslatorService
     }
 
 
+    /// <summary>
+    /// Identify a file whether json or not. 
+    /// </summary>
+    /// <param name="fileBytes">The document that need to check whether it is a json or not</param>
+    /// <returns>
+    /// If the file is a json, returns true. Otherwise false.
+    /// </returns>
     public bool IdentifyJson(byte[] fileBytes)
     {
         try
@@ -869,12 +985,22 @@ public class TranslatorService : ITranslatorService
             JToken.Parse(jsonString);
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogInformation("Not a Json file");
             return false;
         }
     }
 
+
+    /// <summary>
+    /// Translates a text to a selected language.
+    /// </summary>
+    /// <param name="textToTranslate">The text that need to be translate</param>
+    /// <param name="targetLanguage">Expected Language of the translated text</param>
+    /// <returns>
+    /// Returns the translated text as a string.
+    /// </returns>
     public async Task<string> TextTranslator(string textToTranslate, string targetLanguage)
     {
         // Input and output languages are defined as parameters.

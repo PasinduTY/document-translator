@@ -37,7 +37,7 @@ public interface ITranslatorService
 
     Task CleanOutputContainer();
 
-    Task<byte[]> SyncTranslateDocument(byte[] inputDocument, string targetLanguage);
+    Task<byte[]> SyncTranslateDocument(byte[] inputDocument, string targetLanguage, string filename);
 
     Task<string> TextTranslator(string textToTranslate, string targetLanguage);
     public bool IdentifyJson(byte[] fileBytes);

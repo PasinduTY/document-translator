@@ -116,7 +116,15 @@ namespace document_translator.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
- 
+            byte[] fileBytes = File.ReadAllBytes("C:/Users/pasindu.si/Downloads/document-translation-sample.docx");
+            //String A = iSynchronousTranslationService.GetFileType(fileBytes);
+            //Console.WriteLine(A);
+            //MemoryStream stream = new MemoryStream(fileBytes);
+            byte[] translatedFile = await iTranslatorService.SyncTranslateDocument(fileBytes, "fr","document-translation-sample.docx");
+            //Console.WriteLine(iSynchronousTranslationService.GetFileType(fileBytes));
+            
+            //String translatedText = await iTranslatorService.TextTranslator("I would really like to drive your car around the block a few times.", "fr");
+            //Console.WriteLine(translatedText);
             await base.OnInitializedAsync();
             
 
