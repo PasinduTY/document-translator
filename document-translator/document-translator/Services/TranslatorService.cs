@@ -29,10 +29,10 @@ public class TranslatorService : ITranslatorService
     string keyguid;
 
     private static readonly string endpoint = "https://abc-ai-translator.cognitiveservices.azure.com/";
-    private static readonly string subscriptionKey = "e40a0130bc4b4c34bb2fd3dd16fe2752";
+    private static readonly string subscriptionKey = "";
     private static readonly string apiVersion = "2023-11-01-preview";
 
-    private static readonly string key = "d7459b863ba14c74a1d0ae0cf699da63";
+    private static readonly string key = "";
     private static readonly string textendpoint = "https://api.cognitive.microsofttranslator.com";
     private static readonly string location = "centralindia";
 
